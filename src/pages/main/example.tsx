@@ -1,65 +1,177 @@
-import Image from "next/image";
-
+"use client";
+import { useDroppable } from "@dnd-kit/react";
+import { DragDropProvider } from "@dnd-kit/react";
+import { isSortable, useSortable } from "@dnd-kit/react/sortable";
+import { CollisionPriority } from "@dnd-kit/abstract";
+import { useState } from "react";
 export default function Home() {
+  type Card = {
+    id: string;
+    dataDraggable: {
+      columnId: string;
+      index: number;
+    };
+  };
+  const [groups, setGroups] = useState<Record<string, Card[]>>({
+    draggable1: [
+      {
+        id: "1",
+        dataDraggable: {
+          columnId: "draggable1",
+          index: 0,
+        },
+      },
+      {
+        id: "2",
+        dataDraggable: {
+          columnId: "draggable1",
+          index: 1,
+        },
+      },
+      {
+        id: "3",
+        dataDraggable: {
+          columnId: "draggable1",
+          index: 2,
+        },
+      },
+      {
+        id: "4",
+        dataDraggable: {
+          columnId: "draggable1",
+          index: 3,
+        },
+      },
+    ],
+    draggable2: [],
+  });
+
+  function Droppable({ id, children, className }) {
+    const { ref } = useDroppable({
+      id,
+      type: "column",
+      accept: "item",
+      collisionPriority: CollisionPriority.Low,
+    });
+
+    return (
+      <div
+        ref={ref}
+        className={`border border-solid w-2xs h-96 ${className || ""}`}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  function Draggable({ id, dataDraggable }) {
+    const { ref } = useSortable({
+      id: id,
+      group: dataDraggable.columnId,
+      index: dataDraggable.index,
+      type: "item",
+      accept: "item",
+    });
+    return (
+      <button className={`border border-solid w-10 h-10`} ref={ref}>
+        {id}
+        {dataDraggable.index}
+      </button>
+    );
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <DragDropProvider
+      onDragEnd={(event) => {
+        if (event.canceled || !event.operation.source?.id) return;
+        const { source, target } = event.operation;
+        if (!isSortable(source) || !target) return;
+        const { initialIndex, index, initialGroup, group } = source;
+        if (!initialGroup || !group) return;
+
+        setGroups((prev) => {
+          const sourceGroup = [
+            ...prev[initialGroup].slice(0, initialIndex),
+            ...prev[initialGroup].slice(initialIndex).map((item) => ({
+              ...item,
+              dataDraggable: {
+                ...item.dataDraggable,
+                index: item.dataDraggable.index - 1,
+              },
+            })),
+          ];
+          const [replaceItem] = sourceGroup.splice(initialIndex, 1);
+
+          const newIndex =
+            target.type === "column"
+              ? target.id !== initialGroup
+                ? prev[target.id].length
+                : prev[target.id].length - 1
+              : index;
+
+          const newGroup =
+            target.type === "column" && target.id !== initialGroup
+              ? target.id
+              : group;
+
+          replaceItem.dataDraggable.index = newIndex;
+
+          if (initialGroup === newGroup) {
+            sourceGroup.splice(newIndex, 0, replaceItem);
+            return {
+              ...prev,
+              [initialGroup]: [
+                ...sourceGroup.slice(0, newIndex + 1),
+                ...sourceGroup.slice(newIndex + 1).map((item) => ({
+                  ...item,
+                  dataDraggable: {
+                    ...item.dataDraggable,
+                    index: item.dataDraggable.index + 1,
+                  },
+                })),
+              ],
+            };
+          }
+
+          const targetGroup = [...prev[newGroup]];
+          targetGroup.splice(newIndex, 0, replaceItem);
+          replaceItem.dataDraggable.columnId = newGroup as string;
+
+          return {
+            ...prev,
+            [initialGroup]: sourceGroup,
+            [newGroup]: [
+              ...targetGroup.slice(0, newIndex + 1),
+              ...targetGroup.slice(newIndex + 1).map((item) => ({
+                ...item,
+                dataDraggable: {
+                  ...item.dataDraggable,
+                  index: item.dataDraggable.index + 1,
+                },
+              })),
+            ],
+          };
+        });
+      }}
+    >
+      <Droppable id="draggable1">
+        {groups["draggable1"].map((item) => (
+          <Draggable
+            key={item.id}
+            id={item.id}
+            dataDraggable={item.dataDraggable}
+          />
+        ))}
+      </Droppable>
+      <Droppable id="draggable2">
+        {groups["draggable2"].map((item) => (
+          <Draggable
+            key={item.id}
+            id={item.id}
+            dataDraggable={item.dataDraggable}
+          />
+        ))}
+      </Droppable>
+    </DragDropProvider>
   );
 }
