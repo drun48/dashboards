@@ -1,6 +1,6 @@
-import { MoveItem } from "./type";
+import { DnDElement } from "./type";
 
-export const compactor = (elements: MoveItem[]) => {
+export const compactor = (elements: DnDElement[]) => {
   elements.sort((a, b) => a.y - b.y || a.x - b.x);
 
   const processed = [];

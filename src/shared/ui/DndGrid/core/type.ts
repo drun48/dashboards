@@ -1,4 +1,4 @@
-export type MoveItem = {
+export type DnDElement = {
   x: number;
   y: number;
   w: number;
@@ -9,4 +9,12 @@ export type MoveItem = {
 export type Point = {
   x: number;
   y: number;
-}
+};
+
+export type ParamsDnDGrind = {
+  elements: DnDElement[];
+  step: number;
+  minСuts: number;
+  min?: Point;
+  max?: Point;
+};

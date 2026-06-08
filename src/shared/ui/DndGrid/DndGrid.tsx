@@ -3,7 +3,9 @@
 import { DragDropProvider, DragOverlay, useDraggable } from "@dnd-kit/react";
 import type { DragMoveEvent } from "@dnd-kit/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { startMove } from "./core/moving";
+import { moveElement } from "./core/moving";
+import { ParamsDnDGrind } from "./core/type";
+import { compactor } from "./core/compactor";
 
 type Rectangle = {
   x: number;
@@ -14,49 +16,39 @@ type Rectangle = {
 };
 
 export default function DndGrid() {
-  const step = 10;
-  const minСuts = 20;
-
-  const [state, setState] = useState<{
-    maxX: number;
-    maxY: number;
-  }>();
+  const [state, setState] = useState<Omit<ParamsDnDGrind, "elements">>({
+    step: 10,
+    minСuts: 30,
+  });
   const ref = useRef<HTMLDivElement | null>(null);
 
-  const [items, setItems] = useState<Rectangle[]>([
-    { id: "1", x: 0, y: 0, w: 8, h: 8 },
-    { id: "2", x: 12, y: 0, w: 20, h: 30 },
-    { id: "3", x: 0, y: 8, w: 8, h: 8 },
-    { id: "4", x: 40, y: 0, w: 20, h: 30 },
-    { id: "5", x: 40, y: 40, w: 20, h: 30 },
-  ]);
+  const [elements, setElements] = useState(
+    compactor([
+      { id: "1", x: 0, y: 0, w: 8, h: 8 },
+      { id: "2", x: 12, y: 0, w: 20, h: 30 },
+      { id: "3", x: 0, y: 8, w: 8, h: 8 },
+      { id: "4", x: 40, y: 0, w: 20, h: 30 },
+      { id: "5", x: 40, y: 40, w: 20, h: 30 },
+    ]),
+  );
 
   useEffect(() => {
     if (!ref.current) return;
-    const { width, height } = ref.current?.getBoundingClientRect();
-    const x = Math.max(Math.floor(width / step), minСuts);
-    const y = Math.floor(height / step);
+    const { width } = ref.current?.getBoundingClientRect();
+    const x = Math.max(Math.floor(width / state.step), state.minСuts);
 
-    setState({ maxX: x, maxY: y });
+    setState({ ...state, max: { x: x, y: Infinity }, min: { x: 0, y: 0 } });
   }, [ref]);
 
   useEffect(() => {
-    if (!state?.maxX || !state?.maxY) return;
+    if (!state?.max || !state?.min) return;
   }, [state]);
 
-  const test = useCallback(
+  const startMove = useCallback(
     (e: DragMoveEvent) => {
-      if (!state?.maxX) return;
+      if (!state?.max) return;
 
-      setItems((currentItems) =>
-        startMove(
-          e,
-          currentItems,
-          step,
-          { x: state.maxX, y: Infinity },
-          { x: 0, y: 0 },
-        ),
-      );
+      setElements((elements) => moveElement(e, { ...state, elements }));
     },
     [state],
   );
@@ -70,10 +62,10 @@ export default function DndGrid() {
         <button
           className="absolute border border-solid flex"
           style={{
-            width: `${w * step}px`,
-            height: `${h * step}px`,
-            left: `${x * step}px`,
-            top: `${y * step}px`,
+            width: `${w * state.step}px`,
+            height: `${h * state.step}px`,
+            left: `${x * state.step}px`,
+            top: `${y * state.step}px`,
           }}
           ref={ref}
         >
@@ -86,10 +78,10 @@ export default function DndGrid() {
         <div
           className="absolute bg-amber-950"
           style={{
-            width: `${w * step}px`,
-            height: `${h * step}px`,
-            left: `${x * step}px`,
-            top: `${y * step}px`,
+            width: `${w * state.step}px`,
+            height: `${h * state.step}px`,
+            left: `${x * state.step}px`,
+            top: `${y * state.step}px`,
           }}
         >
           {x} {y}
@@ -110,14 +102,10 @@ export default function DndGrid() {
   }
 
   return (
-    <DragDropProvider onDragMove={test}>
-      {state && (
-        <p>
-          Max X: {state.maxX}, Max Y: {state.maxY}
-        </p>
-      )}
+    <DragDropProvider onDragMove={startMove}>
+      {state.max && <p>Max X: {state.max.x}</p>}
       <div className="relative min-h-screen" ref={ref}>
-        {items.map((item) => {
+        {elements.map((item) => {
           return <Draggable {...item} key={item.id}></Draggable>;
         })}
       </div>

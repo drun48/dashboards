@@ -1,6 +1,6 @@
-import { MoveItem } from "./type";
+import { DnDElement } from "./type";
 
-export const isCollision = (elements1: MoveItem, elements2: MoveItem) => {
+export const isCollision = (elements1: DnDElement, elements2: DnDElement) => {
   const isCollisionX =
     (elements1.x <= elements2.x && elements2.x < elements1.x + elements1.w) ||
     (elements2.x <= elements1.x && elements1.x < elements2.x + elements2.w);
@@ -12,7 +12,7 @@ export const isCollision = (elements1: MoveItem, elements2: MoveItem) => {
   return isCollisionX && isCollisionY;
 };
 
-export const getAllCollisions = (element: MoveItem, elements: MoveItem[]) => {
+export const getAllCollisions = (element: DnDElement, elements: DnDElement[]) => {
   return elements.filter((el) => {
     if (el.id === element.id) return false;
     return isCollision(element, el);
