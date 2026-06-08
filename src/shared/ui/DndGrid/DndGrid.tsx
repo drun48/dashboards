@@ -4,7 +4,7 @@ import { DragDropProvider, DragOverlay, useDraggable } from "@dnd-kit/react";
 import type { DragMoveEvent } from "@dnd-kit/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { moveElement } from "./core/moving";
-import { ParamsDnDGrind } from "./core/type";
+import { ParamsDnDGrid } from "./core/type";
 import { compactor } from "./core/compactor";
 
 type Rectangle = {
@@ -16,9 +16,9 @@ type Rectangle = {
 };
 
 export default function DndGrid() {
-  const [state, setState] = useState<Omit<ParamsDnDGrind, "elements">>({
+  const [state, setState] = useState<Omit<ParamsDnDGrid, "elements">>({
     step: 10,
-    minСuts: 30,
+    minCuts: 30,
   });
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -35,14 +35,10 @@ export default function DndGrid() {
   useEffect(() => {
     if (!ref.current) return;
     const { width } = ref.current?.getBoundingClientRect();
-    const x = Math.max(Math.floor(width / state.step), state.minСuts);
+    const x = Math.max(Math.floor(width / state.step), state.minCuts);
 
     setState({ ...state, max: { x: x, y: Infinity }, min: { x: 0, y: 0 } });
-  }, [ref]);
-
-  useEffect(() => {
-    if (!state?.max || !state?.min) return;
-  }, [state]);
+  }, []);
 
   const startMove = useCallback(
     (e: DragMoveEvent) => {

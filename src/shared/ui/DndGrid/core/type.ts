@@ -11,10 +11,10 @@ export type Point = {
   y: number;
 };
 
-export type ParamsDnDGrind = {
+export type ParamsDnDGrid = {
   elements: DnDElement[];
   step: number;
-  minСuts: number;
+  minCuts: number;
   min?: Point;
   max?: Point;
 };

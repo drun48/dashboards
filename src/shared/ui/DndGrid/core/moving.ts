@@ -1,10 +1,10 @@
 import { DragMoveEvent } from "@dnd-kit/react";
-import { ParamsDnDGrind, Point, DnDElement } from "./type";
+import { ParamsDnDGrid, Point, DnDElement } from "./type";
 import { fromGlobalToNormalPosition, normalizePosition } from "./calc";
 import { getAllCollisions, isCollision } from "./collisions";
 import { compactor } from "./compactor";
 
-export const moveElement = (e: DragMoveEvent, params: ParamsDnDGrind) => {
+export const moveElement = (e: DragMoveEvent, params: ParamsDnDGrid) => {
   const elementsCopy = structuredClone(params.elements);
   elementsCopy.sort((a, b) => a.y - b.y);
   const findIndex = elementsCopy.findIndex(
@@ -27,7 +27,7 @@ export const moveElement = (e: DragMoveEvent, params: ParamsDnDGrind) => {
 export const resolveCollisions = (
   element: DnDElement,
   poisition: Point,
-  params: ParamsDnDGrind,
+  params: ParamsDnDGrid,
 ): boolean => {
   const stack: Array<[DnDElement, Point]> = [[element, poisition]];
   const setResolveCollisionsElements = new Set<DnDElement>([element]);

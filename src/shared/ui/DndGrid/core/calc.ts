@@ -1,8 +1,8 @@
-import { ParamsDnDGrind, Point } from "./type";
+import { ParamsDnDGrid, Point } from "./type";
 
 export const normalizePosition = (
   position: Point,
-  { max, min }: ParamsDnDGrind,
+  { max, min }: ParamsDnDGrid,
 ) => {
   const x = Math.max(Math.min(position.x, max?.x ?? Infinity), min?.x ?? 0);
   const y = Math.max(Math.min(position.y, max?.y ?? Infinity), min?.y ?? 0);
@@ -14,7 +14,7 @@ export const normalizePosition = (
 
 export const fromNormalToGlobalPostion = (
   position: Point,
-  { step }: ParamsDnDGrind,
+  { step }: ParamsDnDGrid,
 ) => {
   return {
     x: position.x * step,
@@ -24,7 +24,7 @@ export const fromNormalToGlobalPostion = (
 
 export const fromGlobalToNormalPosition = (
   position: Point,
-  { step }: ParamsDnDGrind,
+  { step }: ParamsDnDGrid,
 ) => {
   return {
     x: Math.round(position.x / step),
