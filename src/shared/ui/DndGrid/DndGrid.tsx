@@ -1,19 +1,12 @@
 "use client";
 
-import { DragDropProvider, DragOverlay, useDraggable } from "@dnd-kit/react";
+import { DragDropProvider } from "@dnd-kit/react";
 import type { DragMoveEvent } from "@dnd-kit/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { moveElement } from "./core/moving";
-import { ParamsDnDGrid } from "./core/type";
+import { moveElement, resizeElement } from "./core/moving";
+import { ParamsDnDGrid, ResizeDirection } from "./core/type";
 import { compactor } from "./core/compactor";
-
-type Rectangle = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  id: string;
-};
+import { Draggable } from "./ItemGrid";
 
 export default function DndGrid() {
   const [state, setState] = useState<Omit<ParamsDnDGrid, "elements">>({
@@ -36,73 +29,36 @@ export default function DndGrid() {
     if (!ref.current) return;
     const { width } = ref.current?.getBoundingClientRect();
     const x = Math.max(Math.floor(width / state.step), state.minCuts);
-
     setState({ ...state, max: { x: x, y: Infinity }, min: { x: 0, y: 0 } });
   }, []);
 
   const startMove = useCallback(
     (e: DragMoveEvent) => {
-      if (!state?.max) return;
-
-      setElements((elements) => moveElement(e, { ...state, elements }));
+      if (!state?.max || !e.operation.source) return;
+      if (e.operation.source.type === "element-grid") {
+        setElements((elements) => moveElement(e, { ...state, elements }));
+      }
+      if (e.operation.source.type === "resize") {
+        // setElements((elements) => resizeElement(e, e.operation.source!.data.direction as ResizeDirection, { ...state, elements }));
+      }
     },
     [state],
   );
 
-  function Draggable({ id, x, y, w, h }: Rectangle) {
-    const { ref, isDragSource } = useDraggable({
-      id: id,
-    });
-    const getView = (x: number, y: number) => {
-      return (
-        <button
-          className="absolute border border-solid flex"
-          style={{
-            width: `${w * state.step}px`,
-            height: `${h * state.step}px`,
-            left: `${x * state.step}px`,
-            top: `${y * state.step}px`,
-          }}
-          ref={ref}
-        >
-          {id}
-        </button>
-      );
-    };
-    const getViewDrag = () => {
-      return (
-        <div
-          className="absolute bg-amber-950"
-          style={{
-            width: `${w * state.step}px`,
-            height: `${h * state.step}px`,
-            left: `${x * state.step}px`,
-            top: `${y * state.step}px`,
-          }}
-        >
-          {x} {y}
-        </div>
-      );
-    };
-    return (
-      <>
-        {!isDragSource && getView(x, y)}
-        {isDragSource && (
-          <>
-            {getViewDrag()}
-            <DragOverlay>{getView(0, 0)}</DragOverlay>
-          </>
-        )}
-      </>
-    );
-  }
-
   return (
     <DragDropProvider onDragMove={startMove}>
-      {state.max && <p>Max X: {state.max.x}</p>}
       <div className="relative min-h-screen" ref={ref}>
         {elements.map((item) => {
-          return <Draggable {...item} key={item.id}></Draggable>;
+          return (
+            <Draggable
+              params={{
+                elements,
+                ...state,
+              }}
+              {...item}
+              key={item.id}
+            ></Draggable>
+          );
         })}
       </div>
     </DragDropProvider>

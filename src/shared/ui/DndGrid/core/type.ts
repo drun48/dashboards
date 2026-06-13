@@ -18,3 +18,12 @@ export type ParamsDnDGrid = {
   min?: Point;
   max?: Point;
 };
+
+export type VectorSize = {
+  x: -1 | 0 | 1;
+  y: -1 | 0 | 1;
+  widthOffset: number;
+  heightOffset: number;
+};
+
+export type ResizeDirection = "lt" | "rt" | "rb" | "lb";
