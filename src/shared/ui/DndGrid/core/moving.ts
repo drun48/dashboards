@@ -1,6 +1,9 @@
 import { DragMoveEvent } from "@dnd-kit/react";
-import { ParamsDnDGrid, DnDElement, VectorSize, ResizeDirection } from "./type";
-import { fromGlobalToNormalCoords, normalizePosition } from "./calc";
+import { ParamsDnDGrid, DnDElement, ResizeDirection } from "./type";
+import {
+  fromGlobalToNormalCoords,
+  normalizePosition,
+} from "./calc";
 import { getAllCollisions, isCollision } from "./collisions";
 import { compactor } from "./compactor";
 
@@ -39,31 +42,38 @@ export const resizeElement = (
     (el) => el.id === e.operation.source?.id.split("-")[1],
   );
   if (findIndex === -1) return elementsCopy;
-  const { x, y } = normalizePosition(
-    fromGlobalToNormalCoords(e.operation.transform, params),
+  const { x, y } = fromGlobalToNormalCoords(
+    {
+      x: e.operation.shape?.current.boundingRectangle.left ?? 0,
+      y: e.operation.shape?.current.boundingRectangle.top ?? 0,
+    },
     params,
   );
+  // console.log(e);
   const element = elementsCopy[findIndex];
+  const { x: prevX, y: prevY } = fromGlobalToNormalCoords(
+    {
+      x:
+        e.operation.shape?.previous?.boundingRectangle.left ??
+        e.operation.shape?.initial?.boundingRectangle.left ??
+        0,
+      y:
+        e.operation.shape?.previous?.boundingRectangle.top ??
+        e.operation.shape?.initial?.boundingRectangle.top ??
+        0,
+    },
+    params,
+  );
   switch (direction) {
-    case "lt": {
-      element.w = element.w + element.x - x;
-      element.h = element.h + element.y - y;
-
-      element.x = x;
-      element.y = y;
+    case "rb": {
+      element.w += x - prevX;
+      element.h += y - prevY;
       break;
     }
-    case "rt": {
-      element.w = x - element.x;
-      element.h = element.h + element.y - y;
-
-      element.y = y;
-      break;
-    }
-    case "rb":
     case "lb": {
-      element.w = x - element.w;
-      element.h = y - element.h;
+      element.x += x - prevX;
+      element.w -= x - prevX;
+      element.h += y - prevY;
       break;
     }
   }

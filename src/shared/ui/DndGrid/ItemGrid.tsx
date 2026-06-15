@@ -14,7 +14,7 @@ export function Draggable({
     id: id,
     type: "element-grid",
   });
-  const directions: ResizeDirection[] = ["lt", "rt", "rb", "lb"];
+  const directions: ResizeDirection[] = ["rb", "lb"];
   const getView = (x: number, y: number) => {
     return (
       <button

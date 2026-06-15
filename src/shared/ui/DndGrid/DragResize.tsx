@@ -19,8 +19,6 @@ export function ResizeHandle({ elementId, direction }: ResizeHandleProps) {
     const half = size / 2;
 
     const positions: Record<ResizeDirection, React.CSSProperties> = {
-      lt: { top: -half, left: -half, cursor: "nwse-resize" },
-      rt: { top: -half, right: -half, cursor: "nesw-resize" },
       rb: { bottom: -half, right: -half, cursor: "nwse-resize" },
       lb: { bottom: -half, left: -half, cursor: "nesw-resize" },
     };

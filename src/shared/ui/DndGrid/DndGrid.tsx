@@ -32,21 +32,27 @@ export default function DndGrid() {
     setState({ ...state, max: { x: x, y: Infinity }, min: { x: 0, y: 0 } });
   }, []);
 
-  const startMove = useCallback(
+  const moving = useCallback(
     (e: DragMoveEvent) => {
       if (!state?.max || !e.operation.source) return;
       if (e.operation.source.type === "element-grid") {
         setElements((elements) => moveElement(e, { ...state, elements }));
       }
       if (e.operation.source.type === "resize") {
-        // setElements((elements) => resizeElement(e, e.operation.source!.data.direction as ResizeDirection, { ...state, elements }));
+        setElements((elements) =>
+          resizeElement(
+            e,
+            e.operation.source!.data.direction as ResizeDirection,
+            { ...state, elements },
+          ),
+        );
       }
     },
     [state],
   );
 
   return (
-    <DragDropProvider onDragMove={startMove}>
+    <DragDropProvider onDragMove={moving}>
       <div className="relative min-h-screen" ref={ref}>
         {elements.map((item) => {
           return (
