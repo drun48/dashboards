@@ -1,9 +1,6 @@
 import { DragMoveEvent } from "@dnd-kit/react";
 import { ParamsDnDGrid, DnDElement, ResizeDirection } from "./type";
-import {
-  fromGlobalToNormalCoords,
-  normalizePosition,
-} from "./calc";
+import { fromGlobalToNormalCoords, normalizePosition } from "./calc";
 import { getAllCollisions, isCollision } from "./collisions";
 import { compactor } from "./compactor";
 
@@ -14,7 +11,6 @@ export const moveElement = (e: DragMoveEvent, params: ParamsDnDGrid) => {
   );
   if (findIndex === -1) return elementsCopy;
   const element = elementsCopy[findIndex];
-  elementsCopy.sort((a, b) => a.y - b.y);
   const { x, y } = normalizePosition(
     fromGlobalToNormalCoords(
       { x: e.operation.shape?.current.left, y: e.operation.shape?.current.top },
@@ -24,11 +20,12 @@ export const moveElement = (e: DragMoveEvent, params: ParamsDnDGrid) => {
   );
   element.x = x;
   element.y = y;
-  const isResolve = resolveCollisions(element, {
+  elementsCopy.sort((a, b) => a.y - b.y);
+  resolveCollisions(element, {
     ...params,
     elements: elementsCopy,
   });
-  if (!isResolve) return params.elements;
+  // return elementsCopy;
   return compactor([...elementsCopy]);
 };
 
@@ -78,29 +75,25 @@ export const resizeElement = (
     }
   }
   elementsCopy.sort((a, b) => a.y - b.y);
-  const isResolve = resolveCollisions(elementsCopy[findIndex], {
+  resolveCollisions(elementsCopy[findIndex], {
     ...params,
     elements: elementsCopy,
   });
-  if (!isResolve) return params.elements;
   return compactor([...elementsCopy]);
 };
 
 export const resolveCollisions = (
-  element: DnDElement,
+  elementMoving: DnDElement,
   params: ParamsDnDGrid,
-): boolean => {
-  const stack: Array<DnDElement> = [element];
-  const setResolveCollisionsElements = new Set<DnDElement>([element]);
-
+) => {
+  const stack: Array<DnDElement> = [elementMoving];
   while (stack.length) {
-    const element = stack.pop()!;
+    const element = stack.shift()!;
 
     const allcollision = getAllCollisions(element, params.elements);
     if (allcollision.length === 0) continue;
 
     for (const collision of allcollision) {
-      if (setResolveCollisionsElements.has(collision)) return false;
       if (!isCollision(element, collision)) continue;
       const { y } = normalizePosition(
         { x: collision.x, y: element.y + element.h },
@@ -108,8 +101,6 @@ export const resolveCollisions = (
       );
       collision.y = y;
       stack.push(collision);
-      setResolveCollisionsElements.add(collision);
     }
   }
-  return true;
 };

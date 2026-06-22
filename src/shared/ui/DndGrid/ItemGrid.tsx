@@ -1,4 +1,4 @@
-import { DragOverlay, useDraggable } from "@dnd-kit/react";
+import { useDraggable } from "@dnd-kit/react";
 import { DnDElement, ParamsDnDGrid, ResizeDirection } from "./core/type";
 import { ResizeHandle } from "./DragResize";
 
@@ -17,8 +17,8 @@ export function Draggable({
   const directions: ResizeDirection[] = ["rb", "lb"];
   const getView = (x: number, y: number) => {
     return (
-      <button
-        className="absolute border border-solid flex"
+      <div
+        className="absolute border border-solid flex bg-white"
         ref={ref}
         style={{
           width: `${w * params.step}px`,
@@ -29,6 +29,7 @@ export function Draggable({
         }}
       >
         <div className="relative w-full h-full" ref={handleRef}>
+          {id}
           {directions.map((dir) => (
             <ResizeHandle
               key={dir}
@@ -38,21 +39,10 @@ export function Draggable({
             />
           ))}
         </div>
-      </button>
+      </div>
     );
   };
-  const test = () => {
-    return (
-      <button
-        className="border border-solid flex"
-        style={{
-          width: `${w * params.step}px`,
-          height: `${h * params.step}px`,
-        }}
-      ></button>
-    );
-  };
-  const getViewDrag = (x: number, y: number) => {
+  const getProjection = (x: number, y: number) => {
     return (
       <div
         className="absolute bg-amber-950"
@@ -68,12 +58,7 @@ export function Draggable({
   return (
     <>
       {getView(x, y)}
-      {isDragSource && (
-        <>
-          {getViewDrag(x, y)}
-          <DragOverlay>{test()}</DragOverlay>
-        </>
-      )}
+      {isDragSource && <>{getProjection(x, y)}</>}
     </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { DragDropProvider } from "@dnd-kit/react";
+import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import type { DragMoveEvent } from "@dnd-kit/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { moveElement, resizeElement } from "./core/moving";
@@ -13,6 +13,7 @@ export default function DndGrid() {
     step: 10,
     minCuts: 30,
   });
+  const [activeId, setActiveId] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement | null>(null);
 
   const [elements, setElements] = useState(
@@ -51,8 +52,13 @@ export default function DndGrid() {
     [state],
   );
 
+  const activeElement = elements.find((el) => el.id === activeId);
   return (
-    <DragDropProvider onDragMove={moving}>
+    <DragDropProvider
+      onDragMove={moving}
+      onDragStart={(e) => setActiveId(e.operation.source?.id as string)}
+      onDragEnd={() => setActiveId(null)}
+    >
       <div className="relative min-h-screen" ref={ref}>
         {elements.map((item) => {
           return (
@@ -67,6 +73,19 @@ export default function DndGrid() {
           );
         })}
       </div>
+      <DragOverlay>
+        {activeElement && (
+          <div
+            className="border border-solid flex bg-white opacity-70"
+            style={{
+              width: `${activeElement.w * state.step}px`,
+              height: `${activeElement.h * state.step}px`,
+            }}
+          >
+            {activeElement.id}
+          </div>
+        )}
+      </DragOverlay>
     </DragDropProvider>
   );
 }

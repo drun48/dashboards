@@ -12,9 +12,24 @@ export const isCollision = (elements1: DnDElement, elements2: DnDElement) => {
   return isCollisionX && isCollisionY;
 };
 
-export const getAllCollisions = (element: DnDElement, elements: DnDElement[]) => {
+export const getAllCollisions = (
+  element: DnDElement,
+  elements: DnDElement[],
+) => {
   return elements.filter((el) => {
     if (el.id === element.id) return false;
     return isCollision(element, el);
   });
 };
+
+// export const getAllCollisionsUp = (
+//   element: DnDElement,
+//   elements: DnDElement[],
+// ) => {
+//   const collisions = [];
+//   for (const el of elements) {
+//     if (el.y > element.y) break;
+//     if (isCollision(el, element) && el.id !== element.id) collisions.push(el);
+//   }
+//   return collisions;
+// };
