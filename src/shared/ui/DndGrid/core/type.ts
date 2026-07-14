@@ -13,6 +13,7 @@ export type Point = {
 
 export type ParamsDnDGrid = {
   elements: DnDElement[];
+  initElements:DnDElement[],
   step: number;
   minCuts: number;
   min?: Point;

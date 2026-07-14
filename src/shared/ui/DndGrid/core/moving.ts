@@ -6,16 +6,17 @@ import { compactor } from "./compactor";
 
 export const moveElement = (e: DragMoveEvent, params: ParamsDnDGrid) => {
   const elementsCopy = structuredClone(params.elements);
-  const findIndex = elementsCopy.findIndex(
+  const element = elementsCopy.find((el) => el.id === e.operation.source?.id);
+  const initElement = params.initElements.find(
     (el) => el.id === e.operation.source?.id,
   );
-  if (findIndex === -1) return elementsCopy;
-  const element = elementsCopy[findIndex];
+  if (!element || !initElement) return elementsCopy;
+  const { x: offsetX, y: offsetY } = fromGlobalToNormalCoords(
+    e.operation.transform,
+    params,
+  );
   const { x, y } = normalizePosition(
-    fromGlobalToNormalCoords(
-      { x: e.operation.shape?.current.left, y: e.operation.shape?.current.top },
-      params,
-    ),
+    { x: initElement.x + offsetX, y: initElement.y + offsetY },
     params,
   );
   element.x = x;
@@ -25,7 +26,6 @@ export const moveElement = (e: DragMoveEvent, params: ParamsDnDGrid) => {
     ...params,
     elements: elementsCopy,
   });
-  // return elementsCopy;
   return compactor([...elementsCopy]);
 };
 
@@ -35,47 +35,35 @@ export const resizeElement = (
   params: ParamsDnDGrid,
 ) => {
   const elementsCopy = structuredClone(params.elements);
-  const findIndex = elementsCopy.findIndex(
-    (el) => el.id === e.operation.source?.id.split("-")[1],
+  const element = elementsCopy.find(
+    (el) => el.id === (e.operation.source?.id as string).split("-")[1],
   );
-  if (findIndex === -1) return elementsCopy;
-  const { x, y } = fromGlobalToNormalCoords(
-    {
-      x: e.operation.shape?.current.boundingRectangle.left ?? 0,
-      y: e.operation.shape?.current.boundingRectangle.top ?? 0,
-    },
-    params,
+  const initElement = params.initElements.find(
+    (el) => el.id === (e.operation.source?.id as string).split("-")[1],
   );
-  // console.log(e);
-  const element = elementsCopy[findIndex];
-  const { x: prevX, y: prevY } = fromGlobalToNormalCoords(
-    {
-      x:
-        e.operation.shape?.previous?.boundingRectangle.left ??
-        e.operation.shape?.initial?.boundingRectangle.left ??
-        0,
-      y:
-        e.operation.shape?.previous?.boundingRectangle.top ??
-        e.operation.shape?.initial?.boundingRectangle.top ??
-        0,
-    },
+  if (!element || !initElement) return elementsCopy;
+  const { x: offsetX, y: offsetY } = fromGlobalToNormalCoords(
+    e.operation.transform,
     params,
   );
   switch (direction) {
     case "rb": {
-      element.w += x - prevX;
-      element.h += y - prevY;
+      element.w = initElement.w + offsetX;
+      element.h = initElement.h + offsetY;
       break;
     }
     case "lb": {
-      element.x += x - prevX;
-      element.w -= x - prevX;
-      element.h += y - prevY;
+      element.x = Math.min(
+        initElement.x + offsetX,
+        initElement.x + initElement.w,
+      );
+      element.w = initElement.w + initElement.x - element.x;
+      element.h = initElement.h + offsetY;
       break;
     }
   }
   elementsCopy.sort((a, b) => a.y - b.y);
-  resolveCollisions(elementsCopy[findIndex], {
+  resolveCollisions(element, {
     ...params,
     elements: elementsCopy,
   });
