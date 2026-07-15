@@ -70,25 +70,53 @@ export const resizeElement = (
   return compactor([...elementsCopy]);
 };
 
+const getUnderElements = (
+  targetElement: DnDElement,
+  allElements: DnDElement[],
+) => {
+  const zone = {
+    left: targetElement.x,
+    right: targetElement.x + targetElement.w,
+  };
+  const underElement: DnDElement[] = [];
+  for (const el of allElements) {
+    if (
+      targetElement.h + targetElement.y > el.y ||
+      el.x > zone.right ||
+      el.x + el.w < zone.left
+    )
+      continue;
+    underElement.push(el);
+    zone.left = Math.min(el.x, zone.left);
+    zone.right = Math.max(el.w + el.x, zone.right);
+  }
+  return underElement;
+};
+
 export const resolveCollisions = (
   elementMoving: DnDElement,
   params: ParamsDnDGrid,
 ) => {
-  const stack: Array<DnDElement> = [elementMoving];
-  while (stack.length) {
-    const element = stack.shift()!;
-
-    const allcollision = getAllCollisions(element, params.elements);
-    if (allcollision.length === 0) continue;
-
-    for (const collision of allcollision) {
-      if (!isCollision(element, collision)) continue;
-      const { y } = normalizePosition(
-        { x: collision.x, y: element.y + element.h },
-        params,
+  const allcollision = getAllCollisions(elementMoving, params.elements);
+  if (!allcollision.length) return;
+  const calculateOffsetY = new Map<DnDElement, number>();
+  for (const collision of allcollision) {
+    const underElements = getUnderElements(collision, params.elements);
+    let targetY = elementMoving.h + elementMoving.y;
+    calculateOffsetY.set(
+      collision,
+      Math.max(calculateOffsetY.get(collision) ?? targetY, targetY),
+    );
+    targetY = calculateOffsetY.get(collision)! + collision.h;
+    for (const underElement of underElements) {
+      calculateOffsetY.set(
+        underElement,
+        Math.max(calculateOffsetY.get(underElement) ?? targetY, targetY),
       );
-      collision.y = y;
-      stack.push(collision);
+      targetY = calculateOffsetY.get(underElement)! + underElement.h;
     }
+  }
+  for (const [element, yOffset] of calculateOffsetY.entries()) {
+    element.y = yOffset;
   }
 };
