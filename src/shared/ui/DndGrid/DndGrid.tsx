@@ -2,34 +2,37 @@
 
 import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import type { DragMoveEvent, DragStartEvent } from "@dnd-kit/react";
+import { Feedback } from "@dnd-kit/dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { moveElement, resizeElement } from "./core/moving";
 import { DnDElement, ParamsDnDGrid, ResizeDirection } from "./core/type";
-import { compactor } from "./core/compactor";
-import { Draggable } from "./ItemGrid";
+import { ItemGrid } from "./ItemGrid";
 
-export default function DndGrid() {
+type Item<T> = DnDElement & { data?: T };
+
+interface Props<T = unknown> {
+  items: Item<T>[];
+  renderItem?: (item: Item<T>) => React.ReactNode;
+}
+
+export default function DndGrid({ items, renderItem }: Props) {
   const [state, setState] = useState<Omit<ParamsDnDGrid, "elements">>({
     step: 10,
     minCuts: 30,
-    initElements:[]
+    initElements: [],
   });
   const [activeId, setActiveId] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement | null>(null);
 
-  const [elements, setElements] = useState(
-    compactor([
-      { id: "1", x: 0, y: 0, w: 8, h: 8 },
-      { id: "2", x: 12, y: 0, w: 20, h: 30 },
-      { id: "3", x: 0, y: 8, w: 8, h: 8 },
-      { id: "4", x: 40, y: 0, w: 20, h: 30 },
-      { id: "5", x: 40, y: 40, w: 20, h: 30 },
-    ]),
-  );
+  const [elements, setElements] = useState<Item<T>[]>([]);
 
   const [initMovingElements, setInitMovingElements] = useState<DnDElement[]>(
     [],
   );
+
+  useEffect(() => {
+    setElements([...items]);
+  }, [items]);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -82,18 +85,29 @@ export default function DndGrid() {
       onDragMove={moving}
       onDragStart={startMoving}
       onDragEnd={endMoving}
+      plugins={(defaults) => [
+        ...defaults,
+        Feedback.configure({
+          dropAnimation: {
+            duration: 100,
+            easing: "ease-out",
+          },
+        }),
+      ]}
     >
       <div className="relative min-h-screen" ref={ref}>
         {elements.map((item) => {
           return (
-            <Draggable
+            <ItemGrid
               params={{
                 elements,
                 ...state,
               }}
               {...item}
               key={item.id}
-            ></Draggable>
+            >
+              {renderItem ? renderItem(item) : null}
+            </ItemGrid>
           );
         })}
       </div>
@@ -106,7 +120,7 @@ export default function DndGrid() {
               height: `${activeElement.h * state.step}px`,
             }}
           >
-            {activeElement.id}
+            {renderItem ? renderItem(activeElement) : null}
           </div>
         )}
       </DragOverlay>

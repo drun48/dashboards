@@ -1,15 +1,17 @@
 import { useDraggable } from "@dnd-kit/react";
 import { DnDElement, ParamsDnDGrid, ResizeDirection } from "./core/type";
 import { ResizeHandle } from "./DragResize";
+import { PropsWithChildren } from "react";
 
-export function Draggable({
+export function ItemGrid({
   id,
   x,
   y,
   w,
   h,
   params,
-}: DnDElement & { params: ParamsDnDGrid }) {
+  children,
+}: PropsWithChildren<DnDElement & { params: ParamsDnDGrid }>) {
   const { ref, isDragSource, handleRef } = useDraggable({
     id: id,
     type: "element-grid",
@@ -29,7 +31,7 @@ export function Draggable({
         }}
       >
         <div className="relative w-full h-full" ref={handleRef}>
-          {id}
+          {children}
           {directions.map((dir) => (
             <ResizeHandle
               key={dir}
