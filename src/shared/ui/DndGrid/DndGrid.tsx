@@ -3,40 +3,51 @@
 import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import type { DragMoveEvent, DragStartEvent } from "@dnd-kit/react";
 import { Feedback } from "@dnd-kit/dom";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { moveElement, resizeElement } from "./core/moving";
-import { DnDElement, ParamsDnDGrid, ResizeDirection } from "./core/type";
+import {
+  Ref,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { createDndElement, moveElement, resizeElement } from "./core/core";
+import { DndElement, ParamsDnDGrid, ResizeDirection } from "./core/type";
 import { ItemGrid } from "./ItemGrid";
 
-type Item<T> = DnDElement & { data?: T };
-
-interface Props<T = unknown> {
-  items: Item<T>[];
-  renderItem?: (item: Item<T>) => React.ReactNode;
+interface Props<T> {
+  items: DndElement<T>[];
+  updateItems?: (data: DndElement<T>[]) => void;
+  renderItem?: (item: DndElement<T>) => React.ReactNode;
+  ref: Ref<{
+    getNewElement: (options: { width: number; height: number }) => DndElement<T>;
+  }>;
 }
 
-export default function DndGrid({ items, renderItem }: Props) {
+export default function DndGrid<T>({
+  items,
+  renderItem,
+  updateItems,
+  ref,
+}: Props<T>) {
   const [state, setState] = useState<Omit<ParamsDnDGrid, "elements">>({
     step: 10,
     minCuts: 30,
     initElements: [],
   });
   const [activeId, setActiveId] = useState<string | null>(null);
-  const ref = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const [elements, setElements] = useState<Item<T>[]>([]);
-
-  const [initMovingElements, setInitMovingElements] = useState<DnDElement[]>(
+  const [initMovingElements, setInitMovingElements] = useState<DndElement<T>[]>(
     [],
   );
 
-  useEffect(() => {
-    setElements([...items]);
-  }, [items]);
+  const elements = useMemo(() => items, [items]);
 
   useEffect(() => {
-    if (!ref.current) return;
-    const { width } = ref.current?.getBoundingClientRect();
+    if (!containerRef.current) return;
+    const { width } = containerRef.current?.getBoundingClientRect();
     const x = Math.max(Math.floor(width / state.step), state.minCuts);
     setState({ ...state, max: { x: x, y: Infinity }, min: { x: 0, y: 0 } });
   }, []);
@@ -56,28 +67,43 @@ export default function DndGrid({ items, renderItem }: Props) {
 
   const moving = useCallback(
     (e: DragMoveEvent) => {
-      if (!state?.max || !e.operation.source) return;
+      if (!state?.max || !e.operation.source || !updateItems) return;
+      let data;
       if (e.operation.source.type === "element-grid") {
-        setElements((elements) =>
-          moveElement(e, {
+        data = moveElement(e, {
+          ...state,
+          elements,
+          initElements: initMovingElements,
+        });
+      }
+      if (e.operation.source.type === "resize") {
+        data = resizeElement(
+          e,
+          e.operation.source!.data.direction as ResizeDirection,
+          { ...state, elements, initElements: initMovingElements },
+        );
+      }
+      if (data) {
+        updateItems(data);
+      }
+    },
+    [state, updateItems, elements, initMovingElements],
+  );
+
+  useImperativeHandle(ref, () => {
+    return {
+      getNewElement: ({ width, height } = { width: 10, height: 10 }) => {
+        return createDndElement(
+          { w: width, h: height },
+          {
             ...state,
             elements,
             initElements: initMovingElements,
-          }),
+          },
         );
-      }
-      if (e.operation.source.type === "resize") {
-        setElements((elements) =>
-          resizeElement(
-            e,
-            e.operation.source!.data.direction as ResizeDirection,
-            { ...state, elements, initElements: initMovingElements },
-          ),
-        );
-      }
-    },
-    [state, initMovingElements],
-  );
+      },
+    };
+  });
 
   const activeElement = elements.find((el) => el.id === activeId);
   return (
@@ -95,7 +121,7 @@ export default function DndGrid({ items, renderItem }: Props) {
         }),
       ]}
     >
-      <div className="relative min-h-screen" ref={ref}>
+      <div className="relative min-h-screen overflow-auto" ref={containerRef}>
         {elements.map((item) => {
           return (
             <ItemGrid

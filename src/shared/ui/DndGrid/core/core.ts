@@ -1,7 +1,7 @@
 import { DragMoveEvent } from "@dnd-kit/react";
-import { ParamsDnDGrid, DnDElement, ResizeDirection } from "./type";
+import { ParamsDnDGrid, CoreDndElement, ResizeDirection } from "./type";
 import { fromGlobalToNormalCoords, normalizePosition } from "./calc";
-import { getAllCollisions, isCollision } from "./collisions";
+import { getAllCollisions, isAllCollision } from "./collisions";
 import { compactor } from "./compactor";
 
 export const moveElement = (e: DragMoveEvent, params: ParamsDnDGrid) => {
@@ -71,14 +71,14 @@ export const resizeElement = (
 };
 
 const getUnderElements = (
-  targetElement: DnDElement,
-  allElements: DnDElement[],
+  targetElement: CoreDndElement,
+  allElements: CoreDndElement[],
 ) => {
   const zone = {
     left: targetElement.x,
     right: targetElement.x + targetElement.w,
   };
-  const underElement: DnDElement[] = [];
+  const underElement: CoreDndElement[] = [];
   for (const el of allElements) {
     if (
       targetElement.h + targetElement.y > el.y ||
@@ -94,12 +94,12 @@ const getUnderElements = (
 };
 
 export const resolveCollisions = (
-  elementMoving: DnDElement,
+  elementMoving: CoreDndElement,
   params: ParamsDnDGrid,
 ) => {
   const allcollision = getAllCollisions(elementMoving, params.elements);
   if (!allcollision.length) return;
-  const calculateOffsetY = new Map<DnDElement, number>();
+  const calculateOffsetY = new Map<CoreDndElement, number>();
   for (const collision of allcollision) {
     const underElements = getUnderElements(collision, params.elements);
     let targetY = elementMoving.h + elementMoving.y;
@@ -119,4 +119,30 @@ export const resolveCollisions = (
   for (const [element, yOffset] of calculateOffsetY.entries()) {
     element.y = yOffset;
   }
+};
+
+export const createElement = (data: Omit<CoreDndElement, "id">) => {
+  return { ...data, id: crypto.randomUUID() };
+};
+
+export const createDndElement = (
+  { w, h }: Pick<CoreDndElement, "w" | "h">,
+  params: ParamsDnDGrid,
+) => {
+  const elementsCopy = structuredClone(params.elements);
+  elementsCopy.sort((a, b) => a.y - b.y);
+  for (const el of elementsCopy) {
+    const positionsVariants = [
+      normalizePosition({ x: el.x - w, y: el.y }, params),
+      normalizePosition({ x: el.x + el.w, y: el.y }, params),
+      normalizePosition({ x: el.x, y: el.y + el.h }, params),
+    ];
+    for (const position of positionsVariants) {
+      const variant = createElement({ w, h, ...position });
+      if (isAllCollision(variant, elementsCopy)) continue;
+      return variant;
+    }
+  }
+
+  return createElement({ w, h, x: 0, y: 0 });
 };

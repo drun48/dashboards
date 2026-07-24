@@ -1,6 +1,6 @@
-import { DnDElement } from "./type";
+import { CoreDndElement } from "./type";
 
-export const isCollision = (elements1: DnDElement, elements2: DnDElement) => {
+export const isCollision = (elements1: CoreDndElement, elements2: CoreDndElement) => {
   const isCollisionX =
     (elements1.x <= elements2.x && elements2.x < elements1.x + elements1.w) ||
     (elements2.x <= elements1.x && elements1.x < elements2.x + elements2.w);
@@ -13,23 +13,18 @@ export const isCollision = (elements1: DnDElement, elements2: DnDElement) => {
 };
 
 export const getAllCollisions = (
-  element: DnDElement,
-  elements: DnDElement[],
+  element: CoreDndElement,
+  elements: CoreDndElement[],
 ) => {
-  return elements.filter((el) => {
-    if (el.id === element.id) return false;
-    return isCollision(element, el);
+  return elements.filter((candidate) => {
+    if (candidate.id === element.id) return false;
+    return isCollision(element, candidate);
   });
 };
 
-// export const getAllCollisionsUp = (
-//   element: DnDElement,
-//   elements: DnDElement[],
-// ) => {
-//   const collisions = [];
-//   for (const el of elements) {
-//     if (el.y > element.y) break;
-//     if (isCollision(el, element) && el.id !== element.id) collisions.push(el);
-//   }
-//   return collisions;
-// };
+export const isAllCollision = (element: CoreDndElement, elements: CoreDndElement[]) => {
+  for (const candidate of elements) {
+    if (isCollision(element, candidate)) return true;
+  }
+  return false;
+};

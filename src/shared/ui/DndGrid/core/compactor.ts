@@ -1,6 +1,6 @@
-import { DnDElement } from "./type";
+import { CoreDndElement } from "./type";
 
-export const compactor = (elements: DnDElement[]) => {
+export const compactor = (elements: CoreDndElement[]) => {
   elements.sort((a, b) => a.y - b.y || a.x - b.x);
 
   const processed = [];

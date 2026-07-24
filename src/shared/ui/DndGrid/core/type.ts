@@ -1,4 +1,4 @@
-export type DnDElement = {
+export type DnDElementParams = {
   x: number;
   y: number;
   w: number;
@@ -6,14 +6,18 @@ export type DnDElement = {
   id: string;
 };
 
+
+export type CoreDndElement = DnDElementParams & { data?: any };
+export type DndElement<T = unknown> = DnDElementParams & { data?: T };
+
 export type Point = {
   x: number;
   y: number;
 };
 
 export type ParamsDnDGrid = {
-  elements: DnDElement[];
-  initElements:DnDElement[],
+  elements: CoreDndElement[];
+  initElements: CoreDndElement[];
   step: number;
   minCuts: number;
   min?: Point;
