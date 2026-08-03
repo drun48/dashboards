@@ -1,20 +1,20 @@
-import { CoreDndElement } from "./type";
+import { DnDElement } from "./element";
 
-export const isCollision = (elements1: CoreDndElement, elements2: CoreDndElement) => {
+export const isCollision = (elements1: DnDElement, elements2: DnDElement) => {
   const isCollisionX =
-    (elements1.x <= elements2.x && elements2.x < elements1.x + elements1.w) ||
-    (elements2.x <= elements1.x && elements1.x < elements2.x + elements2.w);
+    (elements1.getLeft() <= elements2.getLeft() && elements2.getLeft() < elements1.getRight()) ||
+    (elements2.getLeft() <= elements1.getLeft() && elements1.getLeft() < elements2.getRight());
 
   const isCollisionY =
-    (elements1.y <= elements2.y && elements2.y < elements1.y + elements1.h) ||
-    (elements2.y <= elements1.y && elements1.y < elements2.y + elements2.h);
+    (elements1.getTop() <= elements2.getTop() && elements2.getTop() < elements1.getBottom()) ||
+    (elements2.getTop() <= elements1.getTop() && elements1.getTop() < elements2.getBottom());
 
   return isCollisionX && isCollisionY;
 };
 
 export const getAllCollisions = (
-  element: CoreDndElement,
-  elements: CoreDndElement[],
+  element: DnDElement,
+  elements: DnDElement[],
 ) => {
   return elements.filter((candidate) => {
     if (candidate.id === element.id) return false;
@@ -22,7 +22,7 @@ export const getAllCollisions = (
   });
 };
 
-export const isAllCollision = (element: CoreDndElement, elements: CoreDndElement[]) => {
+export const isAllCollision = (element: DnDElement, elements: DnDElement[]) => {
   for (const candidate of elements) {
     if (isCollision(element, candidate)) return true;
   }

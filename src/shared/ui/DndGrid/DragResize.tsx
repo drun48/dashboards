@@ -9,7 +9,7 @@ interface ResizeHandleProps {
 
 export function ResizeHandle({ elementId, direction }: ResizeHandleProps) {
   const { ref, isDragSource } = useDraggable({
-    id: `resize-${elementId}-${direction}`,
+    id: `resize_${elementId}_${direction}`,
     data: { elementId, direction },
     type: "resize",
   });

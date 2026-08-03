@@ -3,9 +3,23 @@ import { ParamsDnDGrid, CoreDndElement, ResizeDirection } from "./type";
 import { fromGlobalToNormalCoords, normalizePosition } from "./calc";
 import { getAllCollisions, isAllCollision } from "./collisions";
 import { compactor } from "./compactor";
+import { DnDElement } from "./element";
+
+export const transformElementsToClass = (
+  elements: CoreDndElement[],
+  params: ParamsDnDGrid,
+) => {
+  return elements.map((el) => new DnDElement({ ...el, gap: params.gap }));
+};
+export const transformElementsFromClass = (elements: DnDElement[]) => {
+  return elements.map((el) => ({ ...el }));
+};
 
 export const moveElement = (e: DragMoveEvent, params: ParamsDnDGrid) => {
-  const elementsCopy = structuredClone(params.elements);
+  const elementsCopy = transformElementsToClass(
+    structuredClone(params.elements),
+    params,
+  );
   const element = elementsCopy.find((el) => el.id === e.operation.source?.id);
   const initElement = params.initElements.find(
     (el) => el.id === e.operation.source?.id,
@@ -34,12 +48,15 @@ export const resizeElement = (
   direction: ResizeDirection,
   params: ParamsDnDGrid,
 ) => {
-  const elementsCopy = structuredClone(params.elements);
+  const elementsCopy = transformElementsToClass(
+    structuredClone(params.elements),
+    params,
+  );
   const element = elementsCopy.find(
-    (el) => el.id === (e.operation.source?.id as string).split("-")[1],
+    (el) => el.id === (e.operation.source?.id as string).split("_")[1],
   );
   const initElement = params.initElements.find(
-    (el) => el.id === (e.operation.source?.id as string).split("-")[1],
+    (el) => el.id === (e.operation.source?.id as string).split("_")[1],
   );
   if (!element || !initElement) return elementsCopy;
   const { x: offsetX, y: offsetY } = fromGlobalToNormalCoords(
@@ -71,35 +88,35 @@ export const resizeElement = (
 };
 
 const getUnderElements = (
-  targetElement: CoreDndElement,
-  allElements: CoreDndElement[],
+  targetElement: DnDElement,
+  allElements: DnDElement[],
 ) => {
   const zone = {
-    left: targetElement.x,
-    right: targetElement.x + targetElement.w,
+    left: targetElement.getLeft(),
+    right: targetElement.getRight(),
   };
-  const underElement: CoreDndElement[] = [];
+  const underElement: DnDElement[] = [];
   for (const el of allElements) {
     if (
-      targetElement.h + targetElement.y > el.y ||
-      el.x > zone.right ||
-      el.x + el.w < zone.left
+      targetElement.getBottom() > el.getTop() ||
+      el.getLeft() > zone.right ||
+      el.getRight() < zone.left
     )
       continue;
     underElement.push(el);
-    zone.left = Math.min(el.x, zone.left);
-    zone.right = Math.max(el.w + el.x, zone.right);
+    zone.left = Math.min(el.getLeft(), zone.left);
+    zone.right = Math.max(el.getRight(), zone.right);
   }
   return underElement;
 };
 
 export const resolveCollisions = (
-  elementMoving: CoreDndElement,
+  elementMoving: DnDElement,
   params: ParamsDnDGrid,
 ) => {
   const allcollision = getAllCollisions(elementMoving, params.elements);
   if (!allcollision.length) return;
-  const calculateOffsetY = new Map<CoreDndElement, number>();
+  const calculateOffsetY = new Map<DnDElement, number>();
   for (const collision of allcollision) {
     const underElements = getUnderElements(collision, params.elements);
     let targetY = elementMoving.h + elementMoving.y;
@@ -129,17 +146,29 @@ export const createDndElement = (
   { w, h }: Pick<CoreDndElement, "w" | "h">,
   params: ParamsDnDGrid,
 ) => {
-  const elementsCopy = structuredClone(params.elements);
+  const elementsCopy = transformElementsToClass(
+    structuredClone(params.elements),
+    params,
+  );
   elementsCopy.sort((a, b) => a.y - b.y);
   for (const el of elementsCopy) {
     const positionsVariants = [
-      normalizePosition({ x: el.x - w, y: el.y }, params),
-      normalizePosition({ x: el.x + el.w, y: el.y }, params),
-      normalizePosition({ x: el.x, y: el.y + el.h }, params),
-    ];
+      normalizePosition({ x: el.x - w - params.gap, y: el.y }, params),
+      normalizePosition({ x: el.x + el.w + params.gap, y: el.y }, params),
+      normalizePosition({ x: el.x, y: el.y + el.h + params.gap }, params),
+    ]; 
     for (const position of positionsVariants) {
-      const variant = createElement({ w, h, ...position });
-      if (isAllCollision(variant, elementsCopy)) continue;
+      const variant = new DnDElement({
+        ...createElement({ w, h, ...position }),
+        gap: params.gap,
+      });
+      if (
+        isAllCollision(
+          new DnDElement({ ...variant, gap: params.gap }),
+          elementsCopy,
+        )
+      )
+        continue;
       return variant;
     }
   }

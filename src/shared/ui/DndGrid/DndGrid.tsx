@@ -23,6 +23,7 @@ interface Props<T> {
   ref: Ref<{
     getNewElement: (options: { width: number; height: number }) => DndElement<T>;
   }>;
+  gap?: number;
 }
 
 export default function DndGrid<T>({
@@ -30,8 +31,9 @@ export default function DndGrid<T>({
   renderItem,
   updateItems,
   ref,
+  gap,
 }: Props<T>) {
-  const [state, setState] = useState<Omit<ParamsDnDGrid, "elements">>({
+  const [state, setState] = useState<Omit<ParamsDnDGrid, "elements" | 'gap'>>({
     step: 10,
     minCuts: 30,
     initElements: [],
@@ -74,20 +76,21 @@ export default function DndGrid<T>({
           ...state,
           elements,
           initElements: initMovingElements,
+          gap: gap ?? 0,
         });
       }
       if (e.operation.source.type === "resize") {
         data = resizeElement(
           e,
           e.operation.source!.data.direction as ResizeDirection,
-          { ...state, elements, initElements: initMovingElements },
+          { ...state, elements, initElements: initMovingElements, gap: gap ?? 0 },
         );
       }
       if (data) {
         updateItems(data);
       }
     },
-    [state, updateItems, elements, initMovingElements],
+    [state, updateItems, elements, initMovingElements, gap],
   );
 
   useImperativeHandle(ref, () => {
@@ -99,11 +102,12 @@ export default function DndGrid<T>({
             ...state,
             elements,
             initElements: initMovingElements,
+            gap: gap ?? 0,
           },
         );
       },
     };
-  });
+  }, [state, elements, initMovingElements, gap]);
 
   const activeElement = elements.find((el) => el.id === activeId);
   return (

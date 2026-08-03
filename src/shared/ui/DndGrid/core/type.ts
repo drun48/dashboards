@@ -1,11 +1,10 @@
-export type DnDElementParams = {
+export interface DnDElementParams {
   x: number;
   y: number;
   w: number;
   h: number;
   id: string;
 };
-
 
 export type CoreDndElement = DnDElementParams & { data?: any };
 export type DndElement<T = unknown> = DnDElementParams & { data?: T };
@@ -22,6 +21,7 @@ export type ParamsDnDGrid = {
   minCuts: number;
   min?: Point;
   max?: Point;
+  gap: number;
 };
 
 export type ResizeDirection = "rb" | "lb";

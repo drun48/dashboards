@@ -1,6 +1,6 @@
-import { CoreDndElement } from "./type";
+import { DnDElement } from "./element";
 
-export const compactor = (elements: CoreDndElement[]) => {
+export const compactor = (elements: DnDElement[]) => {
   elements.sort((a, b) => a.y - b.y || a.x - b.x);
 
   const processed = [];
@@ -10,10 +10,14 @@ export const compactor = (elements: CoreDndElement[]) => {
 
     for (const upper of processed) {
       const isOverlappingX =
-        current.x < upper.x + upper.w && current.x + current.w > upper.x;
+        current.getLeft() < upper.getRight() &&
+        current.getRight() > upper.getLeft();
 
       if (isOverlappingX) {
-        highestCeiling = Math.max(upper.y + upper.h, highestCeiling);
+        highestCeiling = Math.max(
+          upper.getBottom() + (upper.gap ?? 0) / 2,
+          highestCeiling,
+        );
       }
     }
 
