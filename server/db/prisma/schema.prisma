@@ -83,8 +83,6 @@ model Chart {
   contentBlock   ContentBlock      @relation(fields: [contentBlockId], references: [id])
   dataSource     DataSource?       @relation(fields: [dataSourceId], references: [id])
   
-  // One-to-One связи с конкретными конфигурациями. 
-  // Заполняется только ОДНА из них в зависимости от Chart.type
   pieChartConfig   PieChartConfig?
   donutChartConfig DonutChartConfig?
   barChartConfig   BarChartConfig?
