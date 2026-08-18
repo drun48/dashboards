@@ -118,8 +118,8 @@ model DonutChartConfig {
 model BarChartConfig {
   id           Int      @id @default(autoincrement())
   chartId      Int      @unique
-  xColumn      String
-  yColumns     String[]
+  labelColumn      String
+  valueColumn     String[]
   stacked      Boolean  @default(false)
   grouped      Boolean  @default(false)
   barWidth     Float?
@@ -134,8 +134,8 @@ model BarChartConfig {
 model LineChartConfig {
   id           Int       @id @default(autoincrement())
   chartId      Int       @unique
-  xColumn      String
-  yColumns     String[]
+  labelColumn      String
+  valueColumn     String[]
   curveType    CurveType @default(LINEAR)
   showPoints   Boolean   @default(true)
   showLegend   Boolean   @default(true)
