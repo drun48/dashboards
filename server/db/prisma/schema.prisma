@@ -1,0 +1,168 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../../../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ContentType {
+  TEXT
+  CHART
+}
+
+enum ChartType {
+  PieChart
+  DonutChart
+  BarChart
+  LineChart
+  Table
+}
+
+enum CurveType {
+  LINEAR
+  MONOTONE
+  STEP
+}
+
+model Dashboard {
+  id Int @id @default(autoincrement())
+  name String
+  userId Int
+  blocks Block[]
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  password String
+  name  String?
+  dashboards Dashboard[]
+}
+
+model Block {
+  id    Int     @id @default(autoincrement())
+  x Float
+  y Float
+  w Float
+  h Float
+  dashboardId Int
+  
+  dashboard Dashboard @relation(fields: [dashboardId], references: [id])
+  contentBlocks ContentBlock[]
+}
+
+model ContentBlock {
+  id    Int     @id @default(autoincrement())
+  type ContentType @default(TEXT)
+  title String?
+  description String?
+  settings Json
+  text String
+  
+  
+  chart Chart?
+  block Block[]
+}
+
+model Chart {
+  id             Int       @id @default(autoincrement())
+  type           ChartType
+  contentBlockId Int       @unique
+  
+  dataSourceId   Int?
+  
+  contentBlock   ContentBlock      @relation(fields: [contentBlockId], references: [id])
+  dataSource     DataSource?       @relation(fields: [dataSourceId], references: [id])
+  
+  // One-to-One связи с конкретными конфигурациями. 
+  // Заполняется только ОДНА из них в зависимости от Chart.type
+  pieChartConfig   PieChartConfig?
+  donutChartConfig DonutChartConfig?
+  barChartConfig   BarChartConfig?
+  lineChartConfig  LineChartConfig?
+}
+model PieChartConfig {
+  id            Int           @id @default(autoincrement())
+  chartId       Int           @unique
+  labelColumn   String
+  valueColumn   String
+  colorScheme   String?
+  showLegend    Boolean       @default(true)
+  showTooltip   Boolean       @default(true)
+  innerRadius   Float?       
+  
+  chart Chart @relation(fields: [chartId], references: [id], onDelete: Cascade)
+}
+
+model DonutChartConfig {
+  id            Int           @id @default(autoincrement())
+  chartId       Int           @unique
+  labelColumn   String
+  valueColumn   String
+  colorScheme   String?
+  showLegend    Boolean       @default(true)
+  showTooltip   Boolean       @default(true)
+  innerRadius   Float         @default(0.5)
+  centerLabel   String?
+  
+  chart Chart @relation(fields: [chartId], references: [id], onDelete: Cascade)
+}
+
+model BarChartConfig {
+  id           Int      @id @default(autoincrement())
+  chartId      Int      @unique
+  xColumn      String
+  yColumns     String[]
+  stacked      Boolean  @default(false)
+  grouped      Boolean  @default(false)
+  barWidth     Float?
+  colorScheme  String?
+  showLegend   Boolean  @default(true)
+  showTooltip  Boolean  @default(true)
+  axisLabels   Json? 
+  
+  chart Chart @relation(fields: [chartId], references: [id], onDelete: Cascade)
+}
+
+model LineChartConfig {
+  id           Int       @id @default(autoincrement())
+  chartId      Int       @unique
+  xColumn      String
+  yColumns     String[]
+  curveType    CurveType @default(LINEAR)
+  showPoints   Boolean   @default(true)
+  showLegend   Boolean   @default(true)
+  showTooltip  Boolean   @default(true)
+  axisLabels   Json?
+  
+  chart Chart @relation(fields: [chartId], references: [id], onDelete: Cascade)
+}
+
+model DataSource{
+  id    Int     @id @default(autoincrement())
+  urlConnect String
+  chart Chart[]
+
+  dataContent DataContent[]
+}
+
+model DataContent{
+  id    Int     @id @default(autoincrement())
+  header String
+  idRow Int
+  value String
+  dataSourceId Int
+  lastFetchedAt  DateTime?
+  createdAt      DateTime  @default(now())
+
+  dataSource DataSource @relation(fields: [dataSourceId], references: [id])
+}
