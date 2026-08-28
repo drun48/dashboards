@@ -1,6 +1,6 @@
 "use client";
 
-import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
+import { DragDropProvider } from "@dnd-kit/react";
 import type { DragMoveEvent, DragStartEvent } from "@dnd-kit/react";
 import { Feedback } from "@dnd-kit/dom";
 import {
@@ -21,7 +21,10 @@ interface Props<T> {
   updateItems?: (data: DndElement<T>[]) => void;
   renderItem?: (item: DndElement<T>) => React.ReactNode;
   ref: Ref<{
-    getNewElement: (options: { width: number; height: number }) => DndElement<T>;
+    getNewElement: (options: {
+      width: number;
+      height: number;
+    }) => DndElement<T>;
   }>;
   gap?: number;
 }
@@ -33,12 +36,11 @@ export default function DndGrid<T>({
   ref,
   gap,
 }: Props<T>) {
-  const [state, setState] = useState<Omit<ParamsDnDGrid, "elements" | 'gap'>>({
-    step: 10,
+  const [state, setState] = useState<Omit<ParamsDnDGrid, "elements" | "gap">>({
+    step: 20,
     minCuts: 30,
     initElements: [],
   });
-  const [activeId, setActiveId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [initMovingElements, setInitMovingElements] = useState<DndElement<T>[]>(
@@ -57,13 +59,11 @@ export default function DndGrid<T>({
   const startMoving = useCallback(
     (e: DragStartEvent) => {
       setInitMovingElements([...elements]);
-      setActiveId(e.operation.source?.id as string);
     },
     [elements],
   );
 
   const endMoving = useCallback(() => {
-    setActiveId(null);
     setInitMovingElements([]);
   }, []);
 
@@ -83,7 +83,12 @@ export default function DndGrid<T>({
         data = resizeElement(
           e,
           e.operation.source!.data.direction as ResizeDirection,
-          { ...state, elements, initElements: initMovingElements, gap: gap ?? 0 },
+          {
+            ...state,
+            elements,
+            initElements: initMovingElements,
+            gap: gap ?? 0,
+          },
         );
       }
       if (data) {
@@ -95,7 +100,7 @@ export default function DndGrid<T>({
 
   useImperativeHandle(ref, () => {
     return {
-      getNewElement: ({ width, height } = { width: 10, height: 10 }) => {
+      getNewElement: ({ width, height } = { width: 15, height: 15 }) => {
         return createDndElement(
           { w: width, h: height },
           {
@@ -108,8 +113,6 @@ export default function DndGrid<T>({
       },
     };
   }, [state, elements, initMovingElements, gap]);
-
-  const activeElement = elements.find((el) => el.id === activeId);
   return (
     <DragDropProvider
       onDragMove={moving}
@@ -126,12 +129,13 @@ export default function DndGrid<T>({
       ]}
     >
       <div className="relative min-h-screen overflow-auto" ref={containerRef}>
-        {elements.map((item) => {
+        {elements.map(item => {
           return (
             <ItemGrid
               params={{
                 elements,
                 ...state,
+                gap: gap ?? 0,
               }}
               {...item}
               key={item.id}
@@ -141,19 +145,6 @@ export default function DndGrid<T>({
           );
         })}
       </div>
-      <DragOverlay>
-        {activeElement && (
-          <div
-            className="border border-solid flex bg-white opacity-70"
-            style={{
-              width: `${activeElement.w * state.step}px`,
-              height: `${activeElement.h * state.step}px`,
-            }}
-          >
-            {renderItem ? renderItem(activeElement) : null}
-          </div>
-        )}
-      </DragOverlay>
     </DragDropProvider>
   );
 }
