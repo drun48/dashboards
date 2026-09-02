@@ -1,5 +1,5 @@
 import { DragMoveEvent } from "@dnd-kit/react";
-import { ParamsDnDGrid, CoreDndElement, ResizeDirection } from "./type";
+import { ParamsDnDGrid, CoreDndElement, ResizeDirection, EventMoving } from "./type";
 import { fromGlobalToNormalCoords, normalizePosition } from "./calc";
 import { getAllCollisions, isAllCollision } from "./collisions";
 import { compactor } from "./compactor";
@@ -15,18 +15,18 @@ export const transformElementsFromClass = (elements: DnDElement[]) => {
   return elements.map((el) => ({ ...el }));
 };
 
-export const moveElement = (e: DragMoveEvent, params: ParamsDnDGrid) => {
+export const moveElement = (e: EventMoving, params: ParamsDnDGrid) => {
   const elementsCopy = transformElementsToClass(
     structuredClone(params.elements),
     params,
   );
-  const element = elementsCopy.find((el) => el.id === e.operation.source?.id);
+  const element = elementsCopy.find((el) => el.id === e.id);
   const initElement = params.initElements.find(
-    (el) => el.id === e.operation.source?.id,
+    (el) => el.id === e.id,
   );
   if (!element || !initElement) return elementsCopy;
   const { x: offsetX, y: offsetY } = fromGlobalToNormalCoords(
-    e.operation.transform,
+    e.transform,
     params,
   );
   const { x, y } = normalizePosition(
@@ -44,7 +44,7 @@ export const moveElement = (e: DragMoveEvent, params: ParamsDnDGrid) => {
 };
 
 export const resizeElement = (
-  e: DragMoveEvent,
+  e: EventMoving,
   direction: ResizeDirection,
   params: ParamsDnDGrid,
 ) => {
@@ -53,14 +53,14 @@ export const resizeElement = (
     params,
   );
   const element = elementsCopy.find(
-    (el) => el.id === (e.operation.source?.id as string).split("_")[1],
+    (el) => el.id === (e.id as string).split("_")[1],
   );
   const initElement = params.initElements.find(
-    (el) => el.id === (e.operation.source?.id as string).split("_")[1],
+    (el) => el.id === (e.id as string).split("_")[1],
   );
   if (!element || !initElement) return elementsCopy;
   const { x: offsetX, y: offsetY } = fromGlobalToNormalCoords(
-    e.operation.transform,
+    e.transform,
     params,
   );
   switch (direction) {
@@ -156,7 +156,7 @@ export const createDndElement = (
       normalizePosition({ x: el.x - w - params.gap, y: el.y }, params),
       normalizePosition({ x: el.x + el.w + params.gap, y: el.y }, params),
       normalizePosition({ x: el.x, y: el.y + el.h + params.gap }, params),
-    ]; 
+    ];
     for (const position of positionsVariants) {
       const variant = new DnDElement({
         ...createElement({ w, h, ...position }),

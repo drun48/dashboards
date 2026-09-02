@@ -1,7 +1,8 @@
 import { useDraggable } from "@dnd-kit/react";
-import {DndElement, ParamsDnDGrid, ResizeDirection } from "./core/type";
+import { DndElement, ParamsDnDGrid, ResizeDirection } from "./core/type";
 import { ResizeHandle } from "./DragResize";
 import { memo, PropsWithChildren } from "react";
+
 
 export const ItemGrid = memo(function ItemGrid({
   id,
@@ -63,4 +64,4 @@ export const ItemGrid = memo(function ItemGrid({
       {isDragSource && <>{getProjection(x, y)}</>}
     </>
   );
-})
+});

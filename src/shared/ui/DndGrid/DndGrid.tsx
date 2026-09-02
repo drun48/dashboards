@@ -1,8 +1,9 @@
 "use client";
 
-import { DragDropProvider } from "@dnd-kit/react";
+import { DragDropProvider, DragOverlay, useDroppable } from "@dnd-kit/react";
 import type { DragMoveEvent, DragStartEvent } from "@dnd-kit/react";
 import { Feedback } from "@dnd-kit/dom";
+import { SnapModifier } from "@dnd-kit/abstract/modifiers";
 import {
   Ref,
   useCallback,
@@ -46,6 +47,7 @@ export default function DndGrid<T>({
   const [initMovingElements, setInitMovingElements] = useState<DndElement<T>[]>(
     [],
   );
+  const initialScroll = useRef({ x: 0, y: 0 });
 
   const elements = useMemo(() => items, [items]);
 
@@ -53,12 +55,22 @@ export default function DndGrid<T>({
     if (!containerRef.current) return;
     const { width } = containerRef.current?.getBoundingClientRect();
     const x = Math.max(Math.floor(width / state.step), state.minCuts);
-    setState({ ...state, max: { x: x, y: Infinity }, min: { x: 0, y: 0 } });
+    setState({
+      ...state,
+      max: { x: x * 300, y: Infinity },
+      min: { x: 0, y: 0 },
+    });
   }, []);
 
   const startMoving = useCallback(
     (e: DragStartEvent) => {
       setInitMovingElements([...elements]);
+      if (containerRef.current) {
+        initialScroll.current = {
+          x: containerRef.current.scrollLeft,
+          y: containerRef.current.scrollTop,
+        };
+      }
     },
     [elements],
   );
@@ -66,22 +78,43 @@ export default function DndGrid<T>({
   const endMoving = useCallback(() => {
     setInitMovingElements([]);
   }, []);
-
   const moving = useCallback(
     (e: DragMoveEvent) => {
-      if (!state?.max || !e.operation.source || !updateItems) return;
+      if (
+        !state?.max ||
+        !e.operation.source ||
+        !updateItems ||
+        !containerRef.current
+      )
+        return;
+      const container = containerRef.current;
+
+      const scrollDelta = container
+        ? {
+            x: container.scrollLeft - initialScroll.current.x,
+            y: container.scrollTop - initialScroll.current.y,
+          }
+        : { x: 0, y: 0 };
+
+      const transform = {
+        x: e.operation.transform.x + scrollDelta.x,
+        y: e.operation.transform.y + scrollDelta.y,
+      };
       let data;
       if (e.operation.source.type === "element-grid") {
-        data = moveElement(e, {
-          ...state,
-          elements,
-          initElements: initMovingElements,
-          gap: gap ?? 0,
-        });
+        data = moveElement(
+          { transform, id: e.operation.source.id as string },
+          {
+            ...state,
+            elements,
+            initElements: initMovingElements,
+            gap: gap ?? 0,
+          },
+        );
       }
       if (e.operation.source.type === "resize") {
         data = resizeElement(
-          e,
+          { transform, id: e.operation.source.id as string },
           e.operation.source!.data.direction as ResizeDirection,
           {
             ...state,
@@ -118,6 +151,11 @@ export default function DndGrid<T>({
       onDragMove={moving}
       onDragStart={startMoving}
       onDragEnd={endMoving}
+      modifiers={[
+        SnapModifier.configure({
+          size: state.step,
+        }),
+      ]}
       plugins={(defaults) => [
         ...defaults,
         Feedback.configure({
@@ -129,7 +167,7 @@ export default function DndGrid<T>({
       ]}
     >
       <div className="relative min-h-screen overflow-auto" ref={containerRef}>
-        {elements.map(item => {
+        {elements.map((item) => {
           return (
             <ItemGrid
               params={{
