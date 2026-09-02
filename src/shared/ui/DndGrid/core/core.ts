@@ -1,7 +1,11 @@
-import { DragMoveEvent } from "@dnd-kit/react";
-import { ParamsDnDGrid, CoreDndElement, ResizeDirection, EventMoving } from "./type";
+import {
+  ParamsDnDGrid,
+  CoreDndElement,
+  ResizeDirection,
+  EventMoving,
+} from "./type";
 import { fromGlobalToNormalCoords, normalizePosition } from "./calc";
-import { getAllCollisions, isAllCollision } from "./collisions";
+import { firstCollision, getAllCollisions, isAllCollision } from "./collisions";
 import { compactor } from "./compactor";
 import { DnDElement } from "./element";
 
@@ -15,15 +19,16 @@ export const transformElementsFromClass = (elements: DnDElement[]) => {
   return elements.map((el) => ({ ...el }));
 };
 
-export const moveElement = (e: EventMoving, params: ParamsDnDGrid) => {
+export const moveElement = (
+  e: EventMoving & { directionY: number },
+  params: ParamsDnDGrid,
+) => {
   const elementsCopy = transformElementsToClass(
     structuredClone(params.elements),
     params,
   );
   const element = elementsCopy.find((el) => el.id === e.id);
-  const initElement = params.initElements.find(
-    (el) => el.id === e.id,
-  );
+  const initElement = params.initElements.find((el) => el.id === e.id);
   if (!element || !initElement) return elementsCopy;
   const { x: offsetX, y: offsetY } = fromGlobalToNormalCoords(
     e.transform,
@@ -36,6 +41,13 @@ export const moveElement = (e: EventMoving, params: ParamsDnDGrid) => {
   element.x = x;
   element.y = y;
   elementsCopy.sort((a, b) => a.y - b.y);
+  if (e.directionY > 0) {
+    const collision = firstCollision(element, elementsCopy);
+    if (collision) {
+      element.y = collision.y+collision.h+params.gap
+      elementsCopy.sort((a, b) => a.y - b.y);
+    }
+  }
   resolveCollisions(element, {
     ...params,
     elements: elementsCopy,

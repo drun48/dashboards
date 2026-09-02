@@ -102,8 +102,13 @@ export default function DndGrid<T>({
       };
       let data;
       if (e.operation.source.type === "element-grid") {
+        const directionY =
+          e.operation.position.velocity.y !== 0
+            ? e.operation.position.velocity.y /
+              Math.abs(e.operation.position.velocity.y)
+            : 0;
         data = moveElement(
-          { transform, id: e.operation.source.id as string },
+          { transform, id: e.operation.source.id as string, directionY },
           {
             ...state,
             elements,
