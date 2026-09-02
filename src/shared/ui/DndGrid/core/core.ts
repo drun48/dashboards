@@ -4,7 +4,7 @@ import {
   ResizeDirection,
   EventMoving,
 } from "./type";
-import { fromGlobalToNormalCoords, normalizePosition } from "./calc";
+import { normalizePosition } from "./calc";
 import { firstCollision, getAllCollisions, isAllCollision } from "./collisions";
 import { compactor } from "./compactor";
 import { DnDElement } from "./element";
@@ -30,10 +30,7 @@ export const moveElement = (
   const element = elementsCopy.find((el) => el.id === e.id);
   const initElement = params.initElements.find((el) => el.id === e.id);
   if (!element || !initElement) return elementsCopy;
-  const { x: offsetX, y: offsetY } = fromGlobalToNormalCoords(
-    e.transform,
-    params,
-  );
+  const { x: offsetX, y: offsetY } = e.transform;
   const { x, y } = normalizePosition(
     { x: initElement.x + offsetX, y: initElement.y + offsetY },
     params,
@@ -44,7 +41,7 @@ export const moveElement = (
   if (e.directionY > 0) {
     const collision = firstCollision(element, elementsCopy);
     if (collision) {
-      element.y = collision.y+collision.h+params.gap
+      element.y = collision.y + collision.h + params.gap;
       elementsCopy.sort((a, b) => a.y - b.y);
     }
   }
@@ -71,10 +68,7 @@ export const resizeElement = (
     (el) => el.id === (e.id as string).split("_")[1],
   );
   if (!element || !initElement) return elementsCopy;
-  const { x: offsetX, y: offsetY } = fromGlobalToNormalCoords(
-    e.transform,
-    params,
-  );
+  const { x: offsetX, y: offsetY } = e.transform;
   switch (direction) {
     case "rb": {
       element.w = initElement.w + offsetX;

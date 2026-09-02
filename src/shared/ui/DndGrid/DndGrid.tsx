@@ -97,8 +97,8 @@ export default function DndGrid<T>({
         : { x: 0, y: 0 };
 
       const transform = {
-        x: e.operation.transform.x + scrollDelta.x,
-        y: e.operation.transform.y + scrollDelta.y,
+        x: Math.round((e.operation.transform.x + scrollDelta.x) / state.step),
+        y: Math.round((e.operation.transform.y + scrollDelta.y) / state.step),
       };
       let data;
       if (e.operation.source.type === "element-grid") {

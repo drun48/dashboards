@@ -21,13 +21,3 @@ export const fromNormalToGlobalCoords = (
     y: position.y * step,
   };
 };
-
-export const fromGlobalToNormalCoords = (
-  position: Point,
-  { step }: ParamsDnDGrid,
-) => {
-  return {
-    x: Math.round(position.x / step),
-    y: Math.round(position.y / step),
-  };
-};
