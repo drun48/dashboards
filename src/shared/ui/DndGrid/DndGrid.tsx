@@ -39,7 +39,7 @@ export default function DndGrid<T>({
 }: Props<T>) {
   const [state, setState] = useState<Omit<ParamsDnDGrid, "elements" | "gap">>({
     step: 20,
-    minCuts: 30,
+    minCuts: 40,
     initElements: [],
   });
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -57,7 +57,7 @@ export default function DndGrid<T>({
     const x = Math.max(Math.floor(width / state.step), state.minCuts);
     setState({
       ...state,
-      max: { x: x * 300, y: Infinity },
+      max: { x: x, y: Infinity },
       min: { x: 0, y: 0 },
     });
   }, []);
@@ -158,7 +158,7 @@ export default function DndGrid<T>({
       onDragEnd={endMoving}
       modifiers={[
         SnapModifier.configure({
-          size: state.step,
+          size: state.step / 2,
         }),
       ]}
       plugins={(defaults) => [

@@ -4,7 +4,7 @@ import {
   ResizeDirection,
   EventMoving,
 } from "./type";
-import { normalizePosition } from "./calc";
+import { normalizePosition, normalizePositionElement } from "./calc";
 import { firstCollision, getAllCollisions, isAllCollision } from "./collisions";
 import { compactor } from "./compactor";
 import { DnDElement } from "./element";
@@ -31,8 +31,8 @@ export const moveElement = (
   const initElement = params.initElements.find((el) => el.id === e.id);
   if (!element || !initElement) return elementsCopy;
   const { x: offsetX, y: offsetY } = e.transform;
-  const { x, y } = normalizePosition(
-    { x: initElement.x + offsetX, y: initElement.y + offsetY },
+  const { x, y } = normalizePositionElement(
+    { ...element, x: initElement.x + offsetX, y: initElement.y + offsetY },
     params,
   );
   element.x = x;
@@ -71,17 +71,28 @@ export const resizeElement = (
   const { x: offsetX, y: offsetY } = e.transform;
   switch (direction) {
     case "rb": {
-      element.w = initElement.w + offsetX;
-      element.h = initElement.h + offsetY;
+      const { x: newW, y: newH } = normalizePosition(
+        {
+          x: initElement.x + initElement.w + offsetX,
+          y: initElement.y + initElement.h + offsetY,
+        },
+        params,
+      );
+      element.w = newW - initElement.x;
+      element.h = newH - initElement.y;
       break;
     }
     case "lb": {
-      element.x = Math.min(
-        initElement.x + offsetX,
-        initElement.x + initElement.w,
+      const { x, y: newH } = normalizePosition(
+        {
+          x: initElement.x + offsetX,
+          y: initElement.y + initElement.h + offsetY,
+        },
+        params,
       );
+      element.x = x;
       element.w = initElement.w + initElement.x - element.x;
-      element.h = initElement.h + offsetY;
+      element.h = newH;
       break;
     }
   }

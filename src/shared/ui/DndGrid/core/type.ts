@@ -27,6 +27,6 @@ export type ParamsDnDGrid = {
 export type ResizeDirection = "rb" | "lb";
 
 export type EventMoving = {
-  transform: { x: number; y: number };
+  transform: Point;
   id: string;
 };
