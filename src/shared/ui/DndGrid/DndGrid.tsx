@@ -129,9 +129,18 @@ export default function DndGrid<T>({
           },
         );
       }
-      if (data) {
-        updateItems(data);
-      }
+      if (!data) return;
+      const mapUpdatesKey = data.reduce(
+        (res, el, i) => {
+          res.set(el.id, i);
+          return res;
+        },
+        new Map() as Map<string, number>,
+      );
+      const updates = elements.map((el) => ({
+        ...data[mapUpdatesKey.get(el.id)!],
+      }));
+      updateItems(updates);
     },
     [state, updateItems, elements, initMovingElements, gap],
   );

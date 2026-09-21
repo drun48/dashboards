@@ -4,7 +4,7 @@ import { ResizeHandle } from "./DragResize";
 import { memo, PropsWithChildren } from "react";
 
 
-export const ItemGrid = memo(function ItemGrid({
+export const ItemGrid = function ItemGrid({
   id,
   x,
   y,
@@ -64,4 +64,4 @@ export const ItemGrid = memo(function ItemGrid({
       {isDragSource && <>{getProjection(x, y)}</>}
     </>
   );
-});
+};

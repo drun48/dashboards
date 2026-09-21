@@ -1,10 +1,9 @@
 "use client";
 import DndGrid from "@/shared/ui/DndGrid/DndGrid";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import {  useCallback, useMemo, useRef, useState } from "react";
 import { DndElement } from "@/shared/ui/DndGrid/core/type";
 import { Chart } from "@/entities/chart";
 import { faker } from "@faker-js/faker";
-const MemoizedChart = memo(Chart);
 
 export default function Home() {
   const [elements, setEl] = useState<DndElement<string>[]>([
@@ -47,7 +46,7 @@ export default function Home() {
 
   const renderItem = useCallback(
     (item: (typeof elements)[0]) => {
-      return <MemoizedChart labels={labels} data={data} key={item.id}/>;
+      return <Chart labels={labels} data={data} key={item.id}/>;
     },
     [labels, data],
   );
