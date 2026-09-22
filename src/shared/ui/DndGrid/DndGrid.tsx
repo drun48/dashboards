@@ -1,6 +1,6 @@
 "use client";
 
-import { DragDropProvider, DragOverlay, useDroppable } from "@dnd-kit/react";
+import { DragDropProvider } from "@dnd-kit/react";
 import type { DragMoveEvent, DragStartEvent } from "@dnd-kit/react";
 import { Feedback } from "@dnd-kit/dom";
 import { SnapModifier } from "@dnd-kit/abstract/modifiers";
@@ -28,6 +28,7 @@ interface Props<T> {
     }) => DndElement<T>;
   }>;
   gap?: number;
+  isLocked?: boolean;
 }
 
 export default function DndGrid<T>({
@@ -36,6 +37,7 @@ export default function DndGrid<T>({
   updateItems,
   ref,
   gap,
+  isLocked,
 }: Props<T>) {
   const [state, setState] = useState<Omit<ParamsDnDGrid, "elements" | "gap">>({
     step: 20,
@@ -182,6 +184,7 @@ export default function DndGrid<T>({
     >
       <div className="relative min-h-screen overflow-auto" ref={containerRef}>
         {elements.map((item) => {
+          console.log(isLocked, 'aaa')
           return (
             <ItemGrid
               params={{
@@ -190,6 +193,7 @@ export default function DndGrid<T>({
                 gap: gap ?? 0,
               }}
               {...item}
+              isLocked={!!isLocked}
               key={item.id}
             >
               {renderItem ? renderItem(item) : null}

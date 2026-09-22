@@ -1,8 +1,7 @@
 import { useDraggable } from "@dnd-kit/react";
 import { DndElement, ParamsDnDGrid, ResizeDirection } from "./core/type";
 import { ResizeHandle } from "./DragResize";
-import { memo, PropsWithChildren } from "react";
-
+import { PropsWithChildren } from "react";
 
 export const ItemGrid = function ItemGrid({
   id,
@@ -12,10 +11,14 @@ export const ItemGrid = function ItemGrid({
   h,
   params,
   children,
-}: PropsWithChildren<DndElement & { params: ParamsDnDGrid }>) {
+  isLocked,
+}: PropsWithChildren<
+  DndElement & { params: ParamsDnDGrid; isLocked: boolean }
+>) {
   const { ref, isDragSource, handleRef } = useDraggable({
     id: id,
     type: "element-grid",
+    disabled: isLocked,
   });
   const directions: ResizeDirection[] = ["rb", "lb"];
   const getView = (x: number, y: number) => {

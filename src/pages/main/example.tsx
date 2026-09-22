@@ -77,6 +77,7 @@ export default function Home() {
         ref={test}
         updateItems={setEl}
         gap={1}
+        isLocked={false}
       />
       <button onClick={createEl}>test</button>
     </>
