@@ -7,6 +7,7 @@ import {
   Legend,
   Tooltip,
   PointElement,
+  ArcElement
 } from "chart.js";
 import { useMemo } from "react";
 import { Chart as ChartEl } from "react-chartjs-2";
@@ -40,6 +41,7 @@ ChartJS.register(
   BarElement,
   LineElement,
   PointElement,
+  ArcElement,
   Legend,
   Tooltip,
 );
