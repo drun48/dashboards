@@ -1,9 +1,9 @@
 import { useDraggable } from "@dnd-kit/react";
-import { DnDElement, ParamsDnDGrid, ResizeDirection } from "./core/type";
+import { DndElement, ParamsDnDGrid, ResizeDirection } from "./core/type";
 import { ResizeHandle } from "./DragResize";
 import { PropsWithChildren } from "react";
 
-export function ItemGrid({
+export const ItemGrid = function ItemGrid({
   id,
   x,
   y,
@@ -11,10 +11,14 @@ export function ItemGrid({
   h,
   params,
   children,
-}: PropsWithChildren<DnDElement & { params: ParamsDnDGrid }>) {
+  isLocked,
+}: PropsWithChildren<
+  DndElement & { params: ParamsDnDGrid; isLocked: boolean }
+>) {
   const { ref, isDragSource, handleRef } = useDraggable({
     id: id,
     type: "element-grid",
+    disabled: isLocked,
   });
   const directions: ResizeDirection[] = ["rb", "lb"];
   const getView = (x: number, y: number) => {
@@ -27,10 +31,13 @@ export function ItemGrid({
           height: `${h * params.step}px`,
           left: `${x * params.step}px`,
           top: `${y * params.step}px`,
-          visibility: isDragSource ? "hidden" : "visible",
+          opacity: isDragSource ? 0.5 : 1,
         }}
       >
         <div className="relative w-full h-full" ref={handleRef}>
+          {!isLocked && (
+            <div className="absolute top-0 bottom-0 w-full h-full bg-black opacity-20" />
+          )}
           {children}
           {directions.map((dir) => (
             <ResizeHandle
@@ -63,4 +70,4 @@ export function ItemGrid({
       {isDragSource && <>{getProjection(x, y)}</>}
     </>
   );
-}
+};

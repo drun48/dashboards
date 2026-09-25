@@ -1,4 +1,4 @@
-import { ParamsDnDGrid, Point } from "./type";
+import { CoreDndElement, ParamsDnDGrid, Point } from "./type";
 
 export const normalizePosition = (
   position: Point,
@@ -12,22 +12,24 @@ export const normalizePosition = (
   };
 };
 
-export const fromNormalToGlobalCoords = (
-  position: Point,
-  { step }: ParamsDnDGrid,
+export const normalizePositionElement = (
+  element: CoreDndElement,
+  { max, min }: ParamsDnDGrid,
 ) => {
-  return {
-    x: position.x * step,
-    y: position.y * step,
-  };
-};
+  let x = element.x;
+  let y = element.y;
+  if (typeof max?.x === "number" && element.x + element.w > max?.x) {
+    x = max.x - element.w;
+  }
+  if (typeof max?.y === "number" && element.y + element.h > max.y) {
+    y = max.y - element.h;
+  }
+  if (typeof min?.x === "number" && element.x < min.x) {
+    x = min.x;
+  }
+  if (typeof min?.y === "number" && element.y < min.y) {
+    y = min.y;
+  }
 
-export const fromGlobalToNormalCoords = (
-  position: Point,
-  { step }: ParamsDnDGrid,
-) => {
-  return {
-    x: Math.round(position.x / step),
-    y: Math.round(position.y / step),
-  };
+  return { x, y };
 };

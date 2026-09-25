@@ -1,8 +1,9 @@
 "use client";
 
-import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
+import { DragDropProvider } from "@dnd-kit/react";
 import type { DragMoveEvent, DragStartEvent } from "@dnd-kit/react";
 import { Feedback } from "@dnd-kit/dom";
+import { SnapModifier } from "@dnd-kit/abstract/modifiers";
 import {
   Ref,
   useCallback,
@@ -21,9 +22,13 @@ interface Props<T> {
   updateItems?: (data: DndElement<T>[]) => void;
   renderItem?: (item: DndElement<T>) => React.ReactNode;
   ref: Ref<{
-    getNewElement: (options: { width: number; height: number }) => DndElement<T>;
+    getNewElement: (options: {
+      width: number;
+      height: number;
+    }) => DndElement<T>;
   }>;
   gap?: number;
+  isLocked?: boolean;
 }
 
 export default function DndGrid<T>({
@@ -32,18 +37,19 @@ export default function DndGrid<T>({
   updateItems,
   ref,
   gap,
+  isLocked,
 }: Props<T>) {
-  const [state, setState] = useState<Omit<ParamsDnDGrid, "elements" | 'gap'>>({
-    step: 10,
-    minCuts: 30,
+  const [state, setState] = useState<Omit<ParamsDnDGrid, "elements" | "gap">>({
+    step: 20,
+    minCuts: 40,
     initElements: [],
   });
-  const [activeId, setActiveId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const [initMovingElements, setInitMovingElements] = useState<DndElement<T>[]>(
     [],
   );
+  const initialScroll = useRef({ x: 0, y: 0 });
 
   const elements = useMemo(() => items, [items]);
 
@@ -51,51 +57,99 @@ export default function DndGrid<T>({
     if (!containerRef.current) return;
     const { width } = containerRef.current?.getBoundingClientRect();
     const x = Math.max(Math.floor(width / state.step), state.minCuts);
-    setState({ ...state, max: { x: x, y: Infinity }, min: { x: 0, y: 0 } });
+    setState({
+      ...state,
+      max: { x: x, y: Infinity },
+      min: { x: 0, y: 0 },
+    });
   }, []);
 
   const startMoving = useCallback(
     (e: DragStartEvent) => {
       setInitMovingElements([...elements]);
-      setActiveId(e.operation.source?.id as string);
+      if (containerRef.current) {
+        initialScroll.current = {
+          x: containerRef.current.scrollLeft,
+          y: containerRef.current.scrollTop,
+        };
+      }
     },
     [elements],
   );
 
   const endMoving = useCallback(() => {
-    setActiveId(null);
     setInitMovingElements([]);
   }, []);
-
   const moving = useCallback(
     (e: DragMoveEvent) => {
-      if (!state?.max || !e.operation.source || !updateItems) return;
+      if (
+        !state?.max ||
+        !e.operation.source ||
+        !updateItems ||
+        !containerRef.current
+      )
+        return;
+      const container = containerRef.current;
+
+      const scrollDelta = container
+        ? {
+            x: container.scrollLeft - initialScroll.current.x,
+            y: container.scrollTop - initialScroll.current.y,
+          }
+        : { x: 0, y: 0 };
+
+      const transform = {
+        x: Math.round((e.operation.transform.x + scrollDelta.x) / state.step),
+        y: Math.round((e.operation.transform.y + scrollDelta.y) / state.step),
+      };
       let data;
       if (e.operation.source.type === "element-grid") {
-        data = moveElement(e, {
-          ...state,
-          elements,
-          initElements: initMovingElements,
-          gap: gap ?? 0,
-        });
+        const directionY =
+          e.operation.position.velocity.y !== 0
+            ? e.operation.position.velocity.y /
+              Math.abs(e.operation.position.velocity.y)
+            : 0;
+        data = moveElement(
+          { transform, id: e.operation.source.id as string, directionY },
+          {
+            ...state,
+            elements,
+            initElements: initMovingElements,
+            gap: gap ?? 0,
+          },
+        );
       }
       if (e.operation.source.type === "resize") {
         data = resizeElement(
-          e,
+          { transform, id: e.operation.source.id as string },
           e.operation.source!.data.direction as ResizeDirection,
-          { ...state, elements, initElements: initMovingElements, gap: gap ?? 0 },
+          {
+            ...state,
+            elements,
+            initElements: initMovingElements,
+            gap: gap ?? 0,
+          },
         );
       }
-      if (data) {
-        updateItems(data);
-      }
+      if (!data) return;
+      const mapUpdatesKey = data.reduce(
+        (res, el, i) => {
+          res.set(el.id, i);
+          return res;
+        },
+        new Map() as Map<string, number>,
+      );
+      const updates = elements.map((el) => ({
+        ...data[mapUpdatesKey.get(el.id)!],
+      }));
+      updateItems(updates);
     },
     [state, updateItems, elements, initMovingElements, gap],
   );
 
   useImperativeHandle(ref, () => {
     return {
-      getNewElement: ({ width, height } = { width: 10, height: 10 }) => {
+      getNewElement: ({ width, height } = { width: 15, height: 15 }) => {
         return createDndElement(
           { w: width, h: height },
           {
@@ -108,13 +162,16 @@ export default function DndGrid<T>({
       },
     };
   }, [state, elements, initMovingElements, gap]);
-
-  const activeElement = elements.find((el) => el.id === activeId);
   return (
     <DragDropProvider
       onDragMove={moving}
       onDragStart={startMoving}
       onDragEnd={endMoving}
+      modifiers={[
+        SnapModifier.configure({
+          size: state.step / 2,
+        }),
+      ]}
       plugins={(defaults) => [
         ...defaults,
         Feedback.configure({
@@ -125,15 +182,17 @@ export default function DndGrid<T>({
         }),
       ]}
     >
-      <div className="relative min-h-screen overflow-auto" ref={containerRef}>
+      <div className="relative w-full min-h-screen overflow-auto" ref={containerRef}>
         {elements.map((item) => {
           return (
             <ItemGrid
               params={{
                 elements,
                 ...state,
+                gap: gap ?? 0,
               }}
               {...item}
+              isLocked={!!isLocked}
               key={item.id}
             >
               {renderItem ? renderItem(item) : null}
@@ -141,19 +200,6 @@ export default function DndGrid<T>({
           );
         })}
       </div>
-      <DragOverlay>
-        {activeElement && (
-          <div
-            className="border border-solid flex bg-white opacity-70"
-            style={{
-              width: `${activeElement.w * state.step}px`,
-              height: `${activeElement.h * state.step}px`,
-            }}
-          >
-            {renderItem ? renderItem(activeElement) : null}
-          </div>
-        )}
-      </DragOverlay>
     </DragDropProvider>
   );
 }

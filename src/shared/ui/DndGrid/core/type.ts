@@ -4,7 +4,7 @@ export interface DnDElementParams {
   w: number;
   h: number;
   id: string;
-};
+}
 
 export type CoreDndElement = DnDElementParams & { data?: any };
 export type DndElement<T = unknown> = DnDElementParams & { data?: T };
@@ -25,3 +25,8 @@ export type ParamsDnDGrid = {
 };
 
 export type ResizeDirection = "rb" | "lb";
+
+export type EventMoving = {
+  transform: Point;
+  id: string;
+};

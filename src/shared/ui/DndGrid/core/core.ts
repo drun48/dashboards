@@ -1,7 +1,11 @@
-import { DragMoveEvent } from "@dnd-kit/react";
-import { ParamsDnDGrid, CoreDndElement, ResizeDirection } from "./type";
-import { fromGlobalToNormalCoords, normalizePosition } from "./calc";
-import { getAllCollisions, isAllCollision } from "./collisions";
+import {
+  ParamsDnDGrid,
+  CoreDndElement,
+  ResizeDirection,
+  EventMoving,
+} from "./type";
+import { normalizePosition, normalizePositionElement } from "./calc";
+import { firstCollision, getAllCollisions, isAllCollision } from "./collisions";
 import { compactor } from "./compactor";
 import { DnDElement } from "./element";
 
@@ -15,27 +19,32 @@ export const transformElementsFromClass = (elements: DnDElement[]) => {
   return elements.map((el) => ({ ...el }));
 };
 
-export const moveElement = (e: DragMoveEvent, params: ParamsDnDGrid) => {
+export const moveElement = (
+  e: EventMoving & { directionY: number },
+  params: ParamsDnDGrid,
+) => {
   const elementsCopy = transformElementsToClass(
     structuredClone(params.elements),
     params,
   );
-  const element = elementsCopy.find((el) => el.id === e.operation.source?.id);
-  const initElement = params.initElements.find(
-    (el) => el.id === e.operation.source?.id,
-  );
+  const element = elementsCopy.find((el) => el.id === e.id);
+  const initElement = params.initElements.find((el) => el.id === e.id);
   if (!element || !initElement) return elementsCopy;
-  const { x: offsetX, y: offsetY } = fromGlobalToNormalCoords(
-    e.operation.transform,
-    params,
-  );
-  const { x, y } = normalizePosition(
-    { x: initElement.x + offsetX, y: initElement.y + offsetY },
+  const { x: offsetX, y: offsetY } = e.transform;
+  const { x, y } = normalizePositionElement(
+    { ...element, x: initElement.x + offsetX, y: initElement.y + offsetY },
     params,
   );
   element.x = x;
   element.y = y;
   elementsCopy.sort((a, b) => a.y - b.y);
+  if (e.directionY > 0) {
+    const collision = firstCollision(element, elementsCopy);
+    if (collision) {
+      element.y = collision.y + collision.h + params.gap;
+      elementsCopy.sort((a, b) => a.y - b.y);
+    }
+  }
   resolveCollisions(element, {
     ...params,
     elements: elementsCopy,
@@ -44,7 +53,7 @@ export const moveElement = (e: DragMoveEvent, params: ParamsDnDGrid) => {
 };
 
 export const resizeElement = (
-  e: DragMoveEvent,
+  e: EventMoving,
   direction: ResizeDirection,
   params: ParamsDnDGrid,
 ) => {
@@ -53,29 +62,37 @@ export const resizeElement = (
     params,
   );
   const element = elementsCopy.find(
-    (el) => el.id === (e.operation.source?.id as string).split("_")[1],
+    (el) => el.id === (e.id as string).split("_")[1],
   );
   const initElement = params.initElements.find(
-    (el) => el.id === (e.operation.source?.id as string).split("_")[1],
+    (el) => el.id === (e.id as string).split("_")[1],
   );
   if (!element || !initElement) return elementsCopy;
-  const { x: offsetX, y: offsetY } = fromGlobalToNormalCoords(
-    e.operation.transform,
-    params,
-  );
+  const { x: offsetX, y: offsetY } = e.transform;
   switch (direction) {
     case "rb": {
-      element.w = initElement.w + offsetX;
-      element.h = initElement.h + offsetY;
+      const { x: newW, y: newH } = normalizePosition(
+        {
+          x: initElement.x + initElement.w + offsetX,
+          y: initElement.y + initElement.h + offsetY,
+        },
+        params,
+      );
+      element.w = newW - initElement.x;
+      element.h = newH - initElement.y;
       break;
     }
     case "lb": {
-      element.x = Math.min(
-        initElement.x + offsetX,
-        initElement.x + initElement.w,
+      const { x, y: newH } = normalizePosition(
+        {
+          x: initElement.x + offsetX,
+          y: initElement.y + initElement.h + offsetY,
+        },
+        params,
       );
+      element.x = x;
       element.w = initElement.w + initElement.x - element.x;
-      element.h = initElement.h + offsetY;
+      element.h = newH;
       break;
     }
   }
@@ -156,7 +173,7 @@ export const createDndElement = (
       normalizePosition({ x: el.x - w - params.gap, y: el.y }, params),
       normalizePosition({ x: el.x + el.w + params.gap, y: el.y }, params),
       normalizePosition({ x: el.x, y: el.y + el.h + params.gap }, params),
-    ]; 
+    ];
     for (const position of positionsVariants) {
       const variant = new DnDElement({
         ...createElement({ w, h, ...position }),
