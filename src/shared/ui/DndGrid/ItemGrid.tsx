@@ -35,6 +35,9 @@ export const ItemGrid = function ItemGrid({
         }}
       >
         <div className="relative w-full h-full" ref={handleRef}>
+          {!isLocked && (
+            <div className="absolute top-0 bottom-0 w-full h-full bg-black opacity-20" />
+          )}
           {children}
           {directions.map((dir) => (
             <ResizeHandle

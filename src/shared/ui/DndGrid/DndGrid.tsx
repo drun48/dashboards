@@ -182,9 +182,8 @@ export default function DndGrid<T>({
         }),
       ]}
     >
-      <div className="relative min-h-screen overflow-auto" ref={containerRef}>
+      <div className="relative w-full min-h-screen overflow-auto" ref={containerRef}>
         {elements.map((item) => {
-          console.log(isLocked, 'aaa')
           return (
             <ItemGrid
               params={{

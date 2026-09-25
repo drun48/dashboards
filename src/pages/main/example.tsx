@@ -37,7 +37,7 @@ export default function Home() {
   const data2 = [
     {
       type: "pie",
-      label: "Dataset 4",
+      label: "# of Votes",
       data: labels.map(() => faker.number.int({ min: -100, max: 1000 })),
     },
   ];
@@ -45,7 +45,7 @@ export default function Home() {
   const data3 = [
     {
       type: "doughnut",
-      label: "Dataset 4",
+      label: "# of Votes",
       data: labels.map(() => faker.number.int({ min: 5, max: 10 })),
     },
   ];
