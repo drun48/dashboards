@@ -98,25 +98,25 @@ model ChartView {
 
   innerRadius Float?
 
-  dataSource  DataSource? @relation(fields: [dataSourceId], references: [id])
+  dataSource  DataSet? @relation(fields: [dataSourceId], references: [id])
   chartConfig Chart[]
 }
 
-model Connection {
+model DataSource {
   id         Int            @id @default(autoincrement())
   urlConnect String
   type       TypeConnection
-  dataSource DataSource[]
+  dataSource DataSet[]
 }
 
-model DataSource {
+model DataSet {
   id           Int @id @default(autoincrement())
   connectionId Int
 
   chart       ChartView[]
   dataContent DataContent[]
 
-  connection Connection @relation(fields: [connectionId], references: [id])
+  connection DataSource @relation(fields: [connectionId], references: [id])
 }
 
 model DataContent {
@@ -128,5 +128,5 @@ model DataContent {
   lastFetchedAt DateTime?
   createdAt     DateTime  @default(now())
 
-  dataSource DataSource @relation(fields: [dataSourceId], references: [id])
+  dataSource DataSet @relation(fields: [dataSourceId], references: [id])
 }

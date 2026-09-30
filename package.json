@@ -19,17 +19,20 @@
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/react": "^0.4.0",
     "@prisma/client": "^7.9.1",
-    "dotenv": "^17.4.2",
     "chart.js": "^4.5.1",
+    "dotenv": "^17.4.2",
     "next": "16.2.4",
+    "pg": "^8.23.0",
     "react": "19.2.4",
     "react-chartjs-2": "^5.3.1",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.6.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
