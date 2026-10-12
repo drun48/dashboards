@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../../../generated/prisma"
@@ -12,121 +7,125 @@ datasource db {
   provider = "postgresql"
 }
 
-enum ContentType {
-  TEXT
+enum BlockKind {
   CHART
+  TEXT
+}
+
+enum SourceType {
+  GOOGLE_SHEET
 }
 
 enum ChartType {
-  Pie
-  Donut
-  Bar
-  Line
-}
-
-enum CurveType {
-  LINEAR
-  MONOTONE
-  STEP
-}
-
-enum TypeConnection {
-  PostgreSQL
-  GoogleSheet
-}
-
-model Dashboard {
-  id     Int     @id @default(autoincrement())
-  name   String
-  userId Int
-  blocks Block[]
-
-  user User @relation(fields: [userId], references: [id])
+  BAR
+  LINE
+  PIE
+  DONUT
 }
 
 model User {
-  id         Int         @id @default(autoincrement())
-  email      String      @unique
-  password   String
-  name       String?
-  dashboards Dashboard[]
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+
+  dashboards  Dashboard[]
+  dataSources DataSource[]
+  charts      Chart[]
+}
+
+model Dashboard {
+  id            String   @id @default(cuid())
+  ownerId       String
+  title         String
+  gridColumns   Int      @default(48)
+  layoutVersion Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  blocks    Block[]
+  embedLink EmbedLink?
 }
 
 model Block {
-  id          Int   @id @default(autoincrement())
-  x           Float
-  y           Float
-  w           Float
-  h           Float
-  dashboardId Int
-
-  dashboard     Dashboard      @relation(fields: [dashboardId], references: [id])
-  contentBlocks ContentBlock[]
-}
-
-model ContentBlock {
-  id          Int         @id @default(autoincrement())
-  type        ContentType @default(TEXT)
-  title       String?
-  description String?
-  settings    Json
+  id          String    @id @default(cuid())
+  dashboardId String
+  x           Int
+  y           Int
+  w           Int
+  h           Int
+  kind        BlockKind
+  chartId     String?
   text        String?
 
-  chart Chart[]
-  block Block[]
+  dashboard Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+  chart     Chart?    @relation(fields: [chartId], references: [id], onDelete: SetNull)
 }
 
 model Chart {
-  id      Int @id @default(autoincrement())
-  chartId Int
+  id          String      @id @default(cuid())
+  ownerId     String
+  datasetId   String?
+  name        String
+  type        ChartType
+  labelColumn String
+  valueColumn String
+  options     Json?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  contentBlock ContentBlock[]
-  chart        ChartView[]
-}
-
-model ChartView {
-  id Int @id @default(autoincrement())
-
-  type         ChartType
-  dataSourceId Int?
-  labelColumn  String
-  valueColumn  String
-
-  colorScheme String?
-  showLegend  Boolean @default(true)
-  showTooltip Boolean @default(true)
-
-  innerRadius Float?
-
-  dataSource  DataSource? @relation(fields: [dataSourceId], references: [id])
-  chartConfig Chart[]
-}
-
-model Connection {
-  id         Int            @id @default(autoincrement())
-  urlConnect String
-  type       TypeConnection
-  dataSource DataSource[]
+  owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  dataset Dataset? @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  blocks  Block[]
 }
 
 model DataSource {
-  id           Int @id @default(autoincrement())
-  connectionId Int
+  id         String     @id @default(cuid())
+  ownerId    String
+  name       String
+  type       SourceType
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  link       String
 
-  chart       ChartView[]
-  dataContent DataContent[]
+  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  datasets Dataset[]
 
-  connection Connection @relation(fields: [connectionId], references: [id])
 }
 
-model DataContent {
-  id            Int       @id @default(autoincrement())
-  header        String
-  idRow         Int
-  value         String
-  dataSourceId  Int       @unique
-  lastFetchedAt DateTime?
-  createdAt     DateTime  @default(now())
+model Dataset {
+  id       String @id @default(cuid())
+  sourceId String
+  name     String
 
-  dataSource DataSource @relation(fields: [dataSourceId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  refreshAt DateTime?
+
+  source   DataSource       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  snapshot DatasetSnapshot?
+  charts   Chart[]
+}
+
+model DatasetSnapshot {
+  datasetId String   @id
+  columns   Json
+  rows      Json
+  rowCount  Int
+  fetchedAt DateTime
+
+  dataset Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+}
+
+model EmbedLink {
+  id             String    @id @default(cuid())
+  dashboardId    String    @unique
+  tokenHash      String    @unique
+  allowedOrigins String[]
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  dashboard Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
 }
