@@ -99,10 +99,10 @@ model Dataset {
   id       String @id @default(cuid())
   sourceId String
   name     String
+  columnsIsFirstRow Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  refreshAt DateTime?
 
   source   DataSource       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
   snapshot DatasetSnapshot?
@@ -114,7 +114,9 @@ model DatasetSnapshot {
   columns   Json
   rows      Json
   rowCount  Int
-  fetchedAt DateTime
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   dataset Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
 }
