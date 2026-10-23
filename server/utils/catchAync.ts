@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiError } from "./ApiError";
+import { MapperError } from "./errors/type";
+import { mapperDefaultError } from "./errors/mapperDefaultError";
 
 export type AnyRouteContext = {
   params: Promise<Record<string, string | string[]>>;
@@ -7,31 +9,27 @@ export type AnyRouteContext = {
 
 export function catchAsync<TCtx extends AnyRouteContext = AnyRouteContext>(
   fn: (req: NextRequest, ctx: TCtx) => unknown | Promise<unknown>,
-  fnError?: (e: unknown) => Response,
+  mapperErrors: MapperError[] = [],
 ) {
   return async (req: NextRequest, ctx: TCtx) => {
-    const handelError =
-      fnError ??
-      ((e: unknown) => {
-        const statusCode = e instanceof ApiError ? e.statusCode : 500;
-        const message =
-          e instanceof ApiError ? e.message : "Упс, что-то пошло не так";
-        console.error(e);
-        return NextResponse.json(
-          {
-            ok: false,
-            message,
-          },
-          { status: statusCode },
-        );
-      });
+    const mapperErrorsWithDefault = [...mapperErrors, mapperDefaultError];
     try {
       return NextResponse.json({
         ok: true,
         data: await fn(req, ctx),
       });
     } catch (e) {
-      return handelError(e);
+      const { message, statusCode } = mapperErrorsWithDefault
+        .map((mapper) => mapper(e))
+        .find(Boolean) as ApiError;
+      console.error(message, statusCode);
+      return NextResponse.json(
+        {
+          ok: false,
+          message,
+        },
+        { status: statusCode },
+      );
     }
   };
 }
