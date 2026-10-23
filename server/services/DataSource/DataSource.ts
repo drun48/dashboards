@@ -1,9 +1,11 @@
 import prisma from "../../db/prisma/prismaClient";
 import { DTOCreateDataSource, DTOUpdateDataSource } from "./type";
 import { updateDataSourceSchema } from "../../controllers/dataSource/validation";
+import { check } from "../../integrations/googleSheets";
 
 export class DataSource {
   async setDataSource(ownerId: string, data: DTOCreateDataSource) {
+    await check(data.link);
     return await prisma.dataSource.create({
       data: {
         ...data,
@@ -26,20 +28,16 @@ export class DataSource {
     });
   }
 
-  async deleteDataSourceById(id: string, ownerId: string) {
+  async deleteDataSourceById(id: string) {
     return prisma.dataSource.delete({
-      where: { id, ownerId },
+      where: { id },
     });
   }
 
-  async updateDataSourceById(
-    id: string,
-    ownerId: string,
-    data: DTOUpdateDataSource,
-  ) {
+  async updateDataSourceById(id: string, data: DTOUpdateDataSource) {
     const parsedData = updateDataSourceSchema.parse(data);
     return prisma.dataSource.update({
-      where: { id, ownerId },
+      where: { id },
       data: parsedData,
     });
   }
