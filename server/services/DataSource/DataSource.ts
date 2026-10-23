@@ -1,6 +1,5 @@
 import prisma from "../../db/prisma/prismaClient";
 import { DTOCreateDataSource, DTOUpdateDataSource } from "./type";
-import { updateDataSourceSchema } from "../../controllers/dataSource/validation";
 import { check } from "../../integrations/googleSheets";
 
 export class DataSource {
@@ -35,10 +34,9 @@ export class DataSource {
   }
 
   async updateDataSourceById(id: string, data: DTOUpdateDataSource) {
-    const parsedData = updateDataSourceSchema.parse(data);
     return prisma.dataSource.update({
       where: { id },
-      data: parsedData,
+      data: data,
     });
   }
 }
