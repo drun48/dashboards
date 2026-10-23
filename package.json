@@ -21,6 +21,7 @@
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.9.1",
     "chart.js": "^4.5.1",
+    "csv-parse": "^7.0.3",
     "dotenv": "^17.4.2",
     "next": "16.2.4",
     "pg": "^8.23.1",
