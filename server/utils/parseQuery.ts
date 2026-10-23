@@ -7,7 +7,6 @@ export async function parseQuery<TSchema extends z.ZodType>(
   schema: TSchema,
 ) {
   const query = Object.fromEntries(req.nextUrl.searchParams)
-  console.log("objQuery", query);
   const parseData = schema.safeParse(query);
   if (!parseData.success) {
     throw new ApiError({
