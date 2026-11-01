@@ -36,13 +36,11 @@ model User {
 }
 
 model Dashboard {
-  id            String   @id @default(cuid())
-  ownerId       String
-  title         String
-  gridColumns   Int      @default(48)
-  layoutVersion Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        String   @id @default(cuid())
+  ownerId   String
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   blocks    Block[]
@@ -65,7 +63,7 @@ model Block {
 }
 
 model Chart {
-  id          String      @id @default(cuid())
+  id          String    @id @default(cuid())
   ownerId     String
   datasetId   String?
   name        String
@@ -73,8 +71,8 @@ model Chart {
   labelColumn String
   valueColumn String
   options     Json?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   dataset Dataset? @relation(fields: [datasetId], references: [id], onDelete: SetNull)
@@ -82,23 +80,22 @@ model Chart {
 }
 
 model DataSource {
-  id         String     @id @default(cuid())
-  ownerId    String
-  name       String
-  type       SourceType
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  link       String
+  id        String     @id @default(cuid())
+  ownerId   String
+  name      String
+  type      SourceType
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  link      String
 
   owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   datasets Dataset[]
-
 }
 
 model Dataset {
-  id       String @id @default(cuid())
-  sourceId String
-  name     String
+  id                String  @id @default(cuid())
+  sourceId          String
+  name              String
   columnsIsFirstRow Boolean @default(false)
 
   createdAt DateTime @default(now())
@@ -110,11 +107,11 @@ model Dataset {
 }
 
 model DatasetSnapshot {
-  datasetId String   @id
+  datasetId String @id
   columns   Json
   rows      Json
   rowCount  Int
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
