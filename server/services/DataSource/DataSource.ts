@@ -21,21 +21,21 @@ export class DataSource {
     });
   }
 
-  async getDataSourceById(id: string) {
+  async getDataSourceById(ownerId: string, id: string) {
     return prisma.dataSource.findUnique({
-      where: { id },
+      where: { id, ownerId },
     });
   }
 
-  async deleteDataSourceById(id: string) {
+  async deleteDataSourceById(ownerId: string, id: string) {
     return prisma.dataSource.delete({
-      where: { id },
+      where: { id, ownerId },
     });
   }
 
-  async updateDataSourceById(id: string, data: DTOUpdateDataSource) {
+  async updateDataSourceById(ownerId: string, id: string, data: DTOUpdateDataSource) {
     return prisma.dataSource.update({
-      where: { id },
+      where: { id, ownerId },
       data: data,
     });
   }

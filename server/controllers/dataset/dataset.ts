@@ -10,7 +10,7 @@ import { createDataseteSchema, updateDatasetSchema } from "./validation";
 export const createDataset = catchAsync(
   async (req) => {
     const body = await parseBody(req, createDataseteSchema);
-    return await datasetService.create(body);
+    return await datasetService.create("1", body);
   },
   [mapperGoogleSheetError, mapperPrismaError],
 );
@@ -18,7 +18,7 @@ export const createDataset = catchAsync(
 export const getDatasets = catchAsync(
   async (req) => {
     const { page, limit } = await parseQuery(req, paginationSchema);
-    return datasetService.getDataset(page, limit);
+    return datasetService.getDataset("1", page, limit);
   },
   [mapperPrismaError],
 );
@@ -26,7 +26,7 @@ export const getDatasets = catchAsync(
 export const getDatasetById = catchAsync<RouteContext<"/api/dataset/[id]">>(
   async (_, ctx) => {
     const { id } = await ctx.params;
-    return datasetService.getDatasetId(id);
+    return datasetService.getDatasetId("1", id);
   },
   [mapperPrismaError],
 );
@@ -35,7 +35,7 @@ export const updateDatasetById = catchAsync<RouteContext<"/api/dataset/[id]">>(
   async (req, ctx) => {
     const body = await parseBody(req, updateDatasetSchema);
     const { id } = await ctx.params;
-    return datasetService.updateDatasetId(id, body);
+    return datasetService.updateDatasetId("1", id, body);
   },
   [mapperPrismaError],
 );
@@ -43,7 +43,7 @@ export const updateDatasetById = catchAsync<RouteContext<"/api/dataset/[id]">>(
 export const deleteDatasetById = catchAsync<RouteContext<"/api/dataset/[id]">>(
   async (_, ctx) => {
     const { id } = await ctx.params;
-    return datasetService.delete(id);
+    return datasetService.delete("1", id);
   },
   [mapperPrismaError],
 );
@@ -52,7 +52,7 @@ export const getPreview = catchAsync<RouteContext<"/api/dataset/preview/[id]">>(
   async (req, ctx) => {
     const { page, limit } = await parseQuery(req, paginationSchema);
     const { id } = await ctx.params;
-    return datasetService.getPreview(id, page, limit);
+    return datasetService.getPreview("1", id, page, limit);
   },
   [mapperPrismaError, mapperGoogleSheetError],
 );
@@ -60,7 +60,7 @@ export const getPreview = catchAsync<RouteContext<"/api/dataset/preview/[id]">>(
 export const getAllData = catchAsync<RouteContext<"/api/dataset/all/[id]">>(
   async (_, ctx) => {
     const { id } = await ctx.params;
-    return datasetService.getDataAllSnapshot(id);
+    return datasetService.getDataAllSnapshot("1", id);
   },
   [mapperPrismaError, mapperGoogleSheetError],
 );
@@ -68,7 +68,7 @@ export const getAllData = catchAsync<RouteContext<"/api/dataset/all/[id]">>(
 export const refresh = catchAsync<RouteContext<"/api/dataset/refresh/[id]">>(
   async (_, ctx) => {
     const { id } = await ctx.params;
-    return datasetService.refresData(id);
+    return datasetService.refresData("1", id);
   },
   [mapperPrismaError, mapperGoogleSheetError],
 );

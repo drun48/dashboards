@@ -28,7 +28,7 @@ export const getDataSourceById = catchAsync<
 >(
   async (_, ctx) => {
     const { id } = await ctx.params;
-    return dataSourceService.getDataSourceById(id);
+    return dataSourceService.getDataSourceById("1", id);
   },
   [mapperPrismaError],
 );
@@ -38,7 +38,7 @@ export const deleteDataSourceById = catchAsync<
 >(
   async (_, ctx) => {
     const { id } = await ctx.params;
-    return dataSourceService.deleteDataSourceById(id);
+    return dataSourceService.deleteDataSourceById("1", id);
   },
   [mapperPrismaError],
 );
@@ -49,7 +49,7 @@ export const updateDataSourceById = catchAsync<
   async (req, ctx) => {
     const body = await parseBody(req, updateDataSourceSchema);
     const { id } = await ctx.params;
-    return dataSourceService.updateDataSourceById(id, body);
+    return dataSourceService.updateDataSourceById("1", id, body);
   },
   [mapperPrismaError],
 );
