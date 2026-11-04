@@ -15,7 +15,7 @@ export class Dashboard {
   }
 
   async getDashboardId(ownerId: string, id: string) {
-    return prisma.dashboard.findUnique({ where: { id, ownerId } });
+    return prisma.dashboard.findUniqueOrThrow({ where: { id, ownerId } });
   }
 
   async updateDashboard(ownerId: string, id: string, data: DTOUpdateDashboard) {
