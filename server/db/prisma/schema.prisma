@@ -16,11 +16,16 @@ enum SourceType {
   GOOGLE_SHEET
 }
 
-enum ChartType {
+enum ChartTypeContent {
   BAR
   LINE
   PIE
   DONUT
+}
+
+enum ChartType {
+  MULTIPLE
+  SINGL
 }
 
 model User {
@@ -63,20 +68,28 @@ model Block {
 }
 
 model Chart {
-  id          String    @id @default(cuid())
-  ownerId     String
+  id        String    @id @default(cuid())
+  ownerId   String
+  title     String
+  options   Json?
+  type      ChartType
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  owner        User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  blocks       Block[]
+  chartContent ChartContent[]
+}
+
+model ChartContent {
+  id          String           @id @default(cuid())
   datasetId   String?
-  name        String
-  type        ChartType
+  type        ChartTypeContent
   labelColumn String
   valueColumn String
-  options     Json?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  dataset Dataset? @relation(fields: [datasetId], references: [id], onDelete: SetNull)
-  blocks  Block[]
+  chartId     String
+  dataset     Dataset?         @relation(fields: [datasetId], references: [id], onDelete: SetNull)
+  chart       Chart            @relation(fields: [chartId], references: [id], onDelete: Cascade)
 }
 
 model DataSource {
@@ -101,9 +114,9 @@ model Dataset {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  source   DataSource       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  snapshot DatasetSnapshot?
-  charts   Chart[]
+  source        DataSource       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  snapshot      DatasetSnapshot?
+  chartContents ChartContent[]
 }
 
 model DatasetSnapshot {
