@@ -34,3 +34,12 @@ export const deleteChartContent = catchAsync<ChartContentContext>(
     },
     [mapperPrismaError],
 );
+
+export const getDataChartContent = catchAsync<ChartContentContext>(
+    async (_, ctx) => {
+        const { id } = await ctx.params;
+        const { idUser } = await getSessionOrThrow()
+        return chartContentService.getDataChartContent(idUser, id);
+    },
+    [mapperPrismaError],
+);

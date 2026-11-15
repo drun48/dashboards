@@ -1,7 +1,6 @@
-import { DTOCreateDataset, DTOUpdateDataset } from "./type";
+import { DTOCreateDataset, DTODatasetSnapshot, DTOUpdateDataset, RowData } from "./type";
 import prisma from "../../db/prisma/prismaClient";
 import { getData } from "../../integrations/googleSheets";
-import { generateColumnsCsv } from "../../utils/generateColumnsCsv";
 import { ApiError } from "../../utils/ApiError";
 
 export class Dataset {
@@ -9,15 +8,9 @@ export class Dataset {
     const dataSource = await prisma.dataSource.findUniqueOrThrow({
       where: { id: data.dataSourceId, ownerId },
     });
-    const dataCsv = await getData(dataSource.link);
-    const columns: string[] = [];
-    for (let i = 0; i < dataCsv.rows?.[0].length; ++i) {
-      if (data.columnsIsFirstRow && dataCsv.rows[0][i])
-        columns.push(dataCsv.rows[0][i]);
-      else columns.push(generateColumnsCsv(i));
-    }
+    const { name, columnsIsFirstRow } = data;
+    const { columns, rows, rowCount } = await getData(dataSource.link, columnsIsFirstRow);
     const result = await prisma.$transaction(async (tx) => {
-      const { name, columnsIsFirstRow } = data;
       const dataset = await tx.dataset.create({
         data: {
           name,
@@ -29,8 +22,8 @@ export class Dataset {
       await tx.datasetSnapshot.create({
         data: {
           columns,
-          rows: dataCsv.rows,
-          rowCount: dataCsv.rowCount,
+          rows,
+          rowCount,
           dataset: { connect: { id: dataset.id } },
         },
       });
@@ -81,12 +74,39 @@ export class Dataset {
     return { ...result };
   }
 
-  async getDataAllSnapshot(ownerId: string, id: string) {
-    const result = await prisma.dataset.findUniqueOrThrow({
+  async getDataAllSnapshot(ownerId: string, id: string, selectColumn: Array<string> = []) {
+    const res = await prisma.dataset.findUniqueOrThrow({
       where: { id, source: { ownerId } },
       include: { snapshot: true },
     });
-    return result;
+    const snapshot = res.snapshot as DTODatasetSnapshot
+    if (!selectColumn.length || !snapshot) {
+      return { ...res, snapshot };
+    }
+    const mapColumnPosition = snapshot.columns.reduce((res, el, i) => {
+      if (res.has(el)) res.set(el, i)
+      return res
+    }, new Map<string, number | null>(
+      selectColumn.map((el) => [el, null])
+    ))
+    const rows = snapshot.rows.map((row) => {
+      const newRow: Array<RowData> = []
+      selectColumn.forEach((col) => {
+        if (mapColumnPosition.get(col) === null) {
+          newRow.push(null)
+          return
+        }
+        newRow.push(row[mapColumnPosition.get(col) as number] ?? null)
+      })
+      return newRow
+    })
+    return {
+      ...res, snapshot: {
+        ...snapshot,
+        rows,
+        columns: selectColumn
+      }
+    };
   }
 
   async delete(ownerId: string, id: string) {
@@ -98,21 +118,13 @@ export class Dataset {
       where: { id, source: { ownerId } },
       include: { source: true },
     });
-    const dataCsv = await getData(dataset.source.link);
-    const columns: string[] = [];
-    for (let i = 0; i < dataCsv.rows?.[0].length; ++i) {
-      if (dataset.columnsIsFirstRow && dataCsv.rows[0][i])
-        columns.push(dataCsv.rows[0][i]);
-      else columns.push(generateColumnsCsv(i));
-    }
-    if (dataset.columnsIsFirstRow) {
-    }
-    prisma.datasetSnapshot.update({
+    const { columns, rows, rowCount } = await getData(dataset.source.link, dataset.columnsIsFirstRow);
+    return await prisma.datasetSnapshot.update({
       where: { datasetId: dataset.id },
       data: {
         columns,
-        rows: dataset.columnsIsFirstRow ? dataCsv.rows.slice(1) : dataCsv.rows,
-        rowCount: dataCsv.rowCount,
+        rows,
+        rowCount,
       },
     });
   }

@@ -4,6 +4,10 @@ import prisma from "../../db/prisma/prismaClient";
 import { ApiError } from "../../utils/ApiError";
 import type { Prisma } from "../../../generated/prisma/client"
 import { DTOCreateChartContent, DTOUpdateChartContent } from "./type";
+import { connect } from "http2";
+import { sources } from "next/dist/compiled/webpack/webpack";
+import { datasetService } from "../Dataset/Dataset";
+// import {} from 
 
 export class ChartContent {
     async create(ownerId: string, dto: DTOCreateChartContent) {
@@ -40,6 +44,35 @@ export class ChartContent {
                 data: { ...data, chart: { connect: { id: chartId, ownerId } }, dataset: { connect: { id: datasetId, source: { ownerId } } } }
             })
         })
+    }
+
+    async getDataChartContent(ownerId: string, idChartContent: string) {
+        const { datasetId, labelColumn, valueColumn } = await prisma.chartContent.findFirstOrThrow({
+            where: {
+                id: idChartContent,
+                chart: { ownerId }
+            },
+        })
+        if (!datasetId) {
+            throw new ApiError({
+                statusCode: 404,
+                message: "Датасет отсутствует",
+            });
+        }
+        const { snapshot } = await datasetService.getDataAllSnapshot(ownerId, datasetId, [labelColumn, valueColumn])
+        if (!snapshot) {
+            throw new ApiError({
+                statusCode: 404,
+                message: "Данные датасета отсутствует",
+            });
+        }
+        return {
+            labelColumn: labelColumn,
+            valueColumn: valueColumn,
+            rowsCount: snapshot.rowCount,
+            labelColumnData: snapshot.rows.map(row => row[0]),
+            valueColumnData: snapshot.rows.map(row => row[1])
+        }
     }
 
     async update(ownerId: string, chartContentId: string, dto: DTOUpdateChartContent) {
