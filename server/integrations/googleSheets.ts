@@ -1,7 +1,8 @@
 import { parse } from "csv-parse/sync";
 import { GoogleSheetError } from "../utils/errors/mapperGoogleSheetError";
+import { generateColumnsCsv } from "../utils/generateColumnsCsv";
 
-export async function getData(url: string) {
+export async function getData(url: string, columnsIsFirstRow: boolean = false) {
   const { gid, spreadsheetId } = parseGoogleSheetsUrl(url);
 
   const exportUrl = new URL(
@@ -26,10 +27,18 @@ export async function getData(url: string) {
     skip_empty_lines: false,
     relax_column_count: true,
   });
+  const columns: string[] = [];
 
+  for (let i = 0; i < (rows?.[0]?.length ?? 0); ++i) {
+    if (columnsIsFirstRow && rows[0][i])
+      columns.push(rows[0][i]);
+    else columns.push(generateColumnsCsv(i));
+  }
+  const dataRows = columnsIsFirstRow ? rows.slice(1) : rows;
   return {
-    rows,
-    rowCount: rows.length,
+    rowCount: dataRows.length,
+    rows: dataRows,
+    columns,
   };
 }
 
