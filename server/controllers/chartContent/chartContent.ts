@@ -3,13 +3,15 @@ import { mapperPrismaError } from "../../utils/errors/mapperPrismaError";
 import { parseBody } from "../../utils/parseBody";
 import { createChartContentSchema, updateChartContentSchema } from "../../services/ChartContent/schema";
 import { chartContentService } from "../../services/ChartContent/ChartContent";
+import { getSessionOrThrow } from "../../utils/getSessionOrThrow";
 
 type ChartContentContext = { params: Promise<{ id: string }> };
 
 export const createChartContent = catchAsync(
     async (req) => {
         const body = await parseBody(req, createChartContentSchema);
-        return await chartContentService.create("1", body);
+        const { idUser } = await getSessionOrThrow()
+        return await chartContentService.create(idUser, body);
     },
     [mapperPrismaError],
 );
@@ -18,7 +20,8 @@ export const updateChartContent = catchAsync<ChartContentContext>(
     async (req, ctx) => {
         const body = await parseBody(req, updateChartContentSchema);
         const { id } = await ctx.params;
-        return chartContentService.update("1", id, body);
+        const { idUser } = await getSessionOrThrow()
+        return chartContentService.update(idUser, id, body);
     },
     [mapperPrismaError],
 );
@@ -26,7 +29,8 @@ export const updateChartContent = catchAsync<ChartContentContext>(
 export const deleteChartContent = catchAsync<ChartContentContext>(
     async (_, ctx) => {
         const { id } = await ctx.params;
-        return chartContentService.delete("1", id);
+        const { idUser } = await getSessionOrThrow()
+        return chartContentService.delete(idUser, id);
     },
     [mapperPrismaError],
 );
