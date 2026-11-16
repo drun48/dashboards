@@ -1,3 +1,4 @@
+import { paramsFilterColumnGetAllData } from "../../services/Dataset/schema";
 import { datasetService } from "../../services/Dataset/Dataset";
 import { catchAsync } from "../../utils/catchAync";
 import { mapperGoogleSheetError } from "../../utils/errors/mapperGoogleSheetError";
@@ -65,10 +66,11 @@ export const getPreview = catchAsync<RouteContext<"/api/dataset/preview/[id]">>(
 );
 
 export const getAllData = catchAsync<RouteContext<"/api/dataset/all/[id]">>(
-  async (_, ctx) => {
+  async (req, ctx) => {
     const { id } = await ctx.params;
+    const { columns } = await parseQuery(req, paramsFilterColumnGetAllData)
     const { idUser } = await getSessionOrThrow()
-    return datasetService.getDataAllSnapshot(idUser, id);
+    return datasetService.getDataAllSnapshot(idUser, id, columns);
   },
   [mapperPrismaError, mapperGoogleSheetError],
 );
