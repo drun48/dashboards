@@ -6,7 +6,12 @@ export async function parseQuery<TSchema extends z.ZodType>(
   req: NextRequest,
   schema: TSchema,
 ) {
-  const query = Object.fromEntries(req.nextUrl.searchParams)
+  const searchParams = req.nextUrl.searchParams
+  const query: Record<string, unknown> = {}
+  for (const key of searchParams.keys()) {
+    const values = searchParams.getAll(key);
+    query[key] = values.length > 1 ? values : values[0];
+  }
   const parseData = schema.safeParse(query);
   if (!parseData.success) {
     throw new ApiError({
