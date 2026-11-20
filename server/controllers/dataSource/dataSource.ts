@@ -6,7 +6,7 @@ import { getSessionOrThrow } from "../../utils/getSessionOrThrow";
 import { parseBody } from "../../utils/parseBody";
 import { parseQuery } from "../../utils/parseQuery";
 import { paginationSchema } from "../validation";
-import { createDataSourceSchema, updateDataSourceSchema } from "./validation";
+import { createDataSourceSchema, updateDataSourceSchema } from "../../services/DataSource/schema";
 
 export const setDataSourceController = catchAsync(
   async (req) => {

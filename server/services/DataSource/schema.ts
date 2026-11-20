@@ -1,9 +1,10 @@
-import * as zod from "zod";
+import { z } from 'zod'
+import { SourceType } from "../../../generated/prisma/enums";
 
-export const createDataSourceSchema = zod.object({
-  name: zod.string().min(1),
-  link: zod.url().min(1),
-  type: zod.enum(["GOOGLE_SHEET"]),
+export const createDataSourceSchema = z.object({
+  name: z.string().min(1),
+  link: z.url().min(1),
+  type: z.enum(SourceType),
 });
 
 export const updateDataSourceSchema = createDataSourceSchema

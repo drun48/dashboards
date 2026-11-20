@@ -1,9 +1,6 @@
-import { SourceType } from "../../../generated/prisma/enums";
+import { z } from 'zod'
+import { createDataSourceSchema, updateDataSourceSchema } from './schema'
 
-export type DTOCreateDataSource = {
-  name: string;
-  link: string;
-  type: SourceType;
-};
 
-export type DTOUpdateDataSource = Partial<Omit<DTOCreateDataSource, "ownerId">>
+export type DTOCreateDataSource = z.infer<typeof createDataSourceSchema>
+export type DTOUpdateDataSource = z.infer<typeof updateDataSourceSchema>
