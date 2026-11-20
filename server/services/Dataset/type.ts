@@ -1,14 +1,9 @@
 import { DatasetSnapshot } from "../../../generated/prisma/client";
+import { z } from 'zod'
+import { createDataseteSchema, updateDatasetSchema } from "./schema";
 
-export type DTOCreateDataset = {
-  dataSourceId: string;
-  name: string;
-  columnsIsFirstRow: boolean;
-};
-
-export type DTOUpdateDataset = {
-  name?: string
-}
+export type DTOCreateDataset = z.infer<typeof createDataseteSchema>
+export type DTOUpdateDataset = z.infer<typeof updateDatasetSchema>
 
 
 export type RowData = string | number | null
