@@ -5,7 +5,7 @@ import { getSessionOrThrow } from "../../utils/getSessionOrThrow";
 import { parseBody } from "../../utils/parseBody";
 import { parseQuery } from "../../utils/parseQuery";
 import { paginationSchema } from "../validation";
-import { createDashboardSchema, updateDashboardSchema } from "./validations";
+import { createDashboardSchema, updateDashboardSchema } from "../../services/Dashboard/schema";
 
 type DashboardContext = { params: Promise<{ id: string }> };
 

@@ -1,5 +1,5 @@
-export type DTOCreateDashboard = {
-  title: string;
-};
+import { z } from "zod";
+import { createDashboardSchema, updateDashboardSchema } from "./schema";
 
-export type DTOUpdateDashboard = DTOCreateDashboard
+export type DTOCreateDashboard = z.infer<typeof createDashboardSchema>
+export type DTOUpdateDashboard = z.infer<typeof updateDashboardSchema>
